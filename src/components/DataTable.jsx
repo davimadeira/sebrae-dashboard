@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Download, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { Search, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const DataTable = ({ data }) => {
   const [searchTerm, setSearchTerm] = useState('');

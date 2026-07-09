@@ -97,9 +97,9 @@ const SLAChart = ({ data }) => {
               dataKey="value"
               nameKey="name"
               cx="50%"
-              cy="45%"
-              outerRadius={90}
-              labelLine={true}
+              cy="50%"
+              outerRadius={95}
+              labelLine={false}
               label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
               labelStyle={{ fontSize: '10px', fill: '#6B7280' }}
             >
@@ -125,13 +125,13 @@ const SLAChart = ({ data }) => {
             <Legend
               wrapperStyle={{ 
                 fontSize: '10px', 
-                paddingTop: '10px',
+                paddingTop: '4px',
                 display: 'flex',
                 flexWrap: 'wrap',
                 justifyContent: 'center'
               }}
               layout="horizontal"
-              verticalAlign="bottom"
+              verticalAlign="top"
               align="center"
             />
           </PieChart>

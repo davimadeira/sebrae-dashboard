@@ -23,7 +23,7 @@ const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilt
     setOpenFilters(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // 🔥 PEGA AS OPÇÕES DO FILTRO
+  // Opcoes disponiveis para os filtros.
   const {
     meses = [],
     semanas = [],
@@ -32,7 +32,7 @@ const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilt
     abertopor = []
   } = options || {};
 
-  // 🔥 CONTA QUANTOS FILTROS ESTÃO ATIVOS
+  // Total usado para exibir o botao de limpar todos.
   const totalActive = 
     (filters?.meses?.length || 0) + 
     (filters?.semanas?.length || 0) + 
@@ -102,7 +102,7 @@ const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilt
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-          <span className="mr-1">🔍</span> Filtros:
+          <span>Filtros:</span>
         </span>
         
         {renderMultiSelect('meses', meses, 'Meses', Calendar)}

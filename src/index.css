@@ -48,6 +48,12 @@ p, span, label {
   color: var(--text-primary);
 }
 
+.text-white,
+.text-white span,
+.text-white svg {
+  color: #ffffff !important;
+}
+
 .text-gray-500, .text-gray-400, .text-gray-600 {
   color: var(--text-secondary) !important;
 }
@@ -164,4 +170,23 @@ table tbody td {
 
 .dark .bg-sebrae-azul-claro-gradiente {
   background: linear-gradient(135deg, #2A4FDA 10%, #1E293B 100%) !important;
+}
+
+.layout-editing .react-grid-item > .react-resizable-handle {
+  opacity: 1;
+  width: 22px;
+  height: 22px;
+  z-index: 20;
+}
+
+.layout-editing .react-grid-item > .react-resizable-handle::after {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #FF6B00;
+  border-bottom: 2px solid #FF6B00;
+}
+
+.layout-editing .react-grid-item.react-draggable-dragging,
+.layout-editing .react-grid-item.resizing {
+  z-index: 30;
 }

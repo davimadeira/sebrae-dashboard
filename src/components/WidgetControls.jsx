@@ -13,7 +13,8 @@ import {
   Clock,
   CheckCircle,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  Headphones
 } from 'lucide-react';
 
 // 🔥 MAPEAMENTO DE ÍCONES (DEPOIS DOS IMPORTS)
@@ -26,6 +27,7 @@ const iconMap = {
   CheckCircle: CheckCircle,
   Users: Users,
   AlertTriangle: AlertTriangle,
+  Headphones: Headphones,
 };
 
 const WidgetControls = ({ widgets, onToggleWidget, onResetWidgets }) => {

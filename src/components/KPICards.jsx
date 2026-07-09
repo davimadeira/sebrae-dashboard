@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+﻿import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
   CheckCircle, 
@@ -18,25 +18,25 @@ const KPICards = ({ stats }) => {
       description: `Chat: ${stats.chat || 0} | Voz: ${stats.voz || 0}`
     },
     { 
-      title: 'Concluídos', 
+      title: 'ConcluÃ­dos', 
       value: stats.concluidos, 
       icon: CheckCircle, 
       color: 'bg-emerald-500',
-      description: `${stats.resolucao}% de resolução`
+      description: `${stats.resolucao}% de resoluÃ§Ã£o`
     },
     { 
       title: 'Pendentes', 
       value: stats.pendentes, 
       icon: Clock, 
       color: 'bg-amber-500',
-      description: 'Aguardando ação'
+      description: 'Aguardando aÃ§Ã£o'
     },
     { 
-      title: '% Resolução', 
+      title: '% ResoluÃ§Ã£o', 
       value: `${stats.resolucao}%`, 
       icon: Percent, 
       color: 'bg-violet-500',
-      description: 'Taxa de conclusão'
+      description: 'Taxa de conclusÃ£o'
     }
   ];
 
@@ -81,7 +81,7 @@ const KPICards = ({ stats }) => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-blue-100">📊 Procedentes CNR</p>
+            <p className="text-xs font-medium text-blue-100">Procedentes CNR</p>
             <p className="text-xl font-bold text-white mt-0.5">
               {stats.cnrSim || 0}
             </p>
@@ -105,7 +105,7 @@ const KPICards = ({ stats }) => {
           />
         </div>
         <p className="text-[10px] text-blue-200 mt-0.5">
-          {stats.cnrSim || 0} SIM / {stats.cnrNao || 0} NÃO
+          {stats.cnrNao || 0} NÃO
         </p>
       </motion.div>
 
@@ -121,7 +121,7 @@ const KPICards = ({ stats }) => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-emerald-100">📊 Procedentes BKO</p>
+            <p className="text-xs font-medium text-emerald-100">Procedentes BKO</p>
             <p className="text-xl font-bold text-white mt-0.5">
               {stats.bkoSim || 0}
             </p>
@@ -145,7 +145,7 @@ const KPICards = ({ stats }) => {
           />
         </div>
         <p className="text-[10px] text-emerald-200 mt-0.5">
-          {stats.bkoSim || 0} SIM / {stats.bkoNao || 0} NÃO
+          {stats.bkoNao || 0} NÃO
         </p>
       </motion.div>
     </div>
@@ -153,3 +153,4 @@ const KPICards = ({ stats }) => {
 };
 
 export default KPICards;
+

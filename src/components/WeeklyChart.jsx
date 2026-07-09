@@ -16,9 +16,6 @@ import { TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 const WeeklyChart = ({ data = [] }) => {
   const [showTable, setShowTable] = useState(false);
 
-  console.log('📊 WeeklyChart - DADOS RECEBIDOS:', data);
-  console.log('📊 WeeklyChart - QUANTIDADE:', data.length);
-
   if (!data || data.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
@@ -40,7 +37,6 @@ const WeeklyChart = ({ data = [] }) => {
     );
   }
 
-  // 🔥 CORREÇÃO: Se data já está pronta, usa ela diretamente
   const chartData = data.map(item => ({
     ...item,
     percResolucao: item.volumetria > 0 
@@ -48,12 +44,9 @@ const WeeklyChart = ({ data = [] }) => {
       : 0
   }));
 
-  console.log('📊 WeeklyChart - chartData processado:', chartData);
-
   const totalChamados = chartData.reduce((sum, item) => sum + item.volumetria, 0);
   const mediaSemanal = chartData.length > 0 ? Math.round(totalChamados / chartData.length) : 0;
 
-  // 🔥 VERIFICA SE HÁ DADOS NO GRÁFICO
   if (chartData.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
