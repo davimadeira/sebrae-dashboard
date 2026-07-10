@@ -1,5 +1,5 @@
 ﻿import { initializeApp } from 'firebase/app';
-import { getAuth, OAuthProvider } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -25,17 +25,10 @@ export const isFirebaseConfigured = Boolean(
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 export const auth = app ? getAuth(app) : null;
 
-export const microsoftProvider = new OAuthProvider('microsoft.com');
-microsoftProvider.setCustomParameters({ prompt: 'select_account' });
+export const getUserEmail = (user) => user?.email || '';
 
-export const getUserEmail = (user) => {
-  if (!user) return '';
-  return user.email || user.providerData?.find(provider => provider.email)?.email || '';
-};
-
-export const isAllowedCorporateEmail = (user) => {
+export const isAllowedCorporateEmail = (userOrEmail) => {
   if (!allowedEmailDomain) return true;
-  const email = getUserEmail(user).toLowerCase();
-  return email.endsWith(`@${allowedEmailDomain}`);
+  const email = typeof userOrEmail === 'string' ? userOrEmail : getUserEmail(userOrEmail);
+  return email.toLowerCase().endsWith(`@${allowedEmailDomain}`);
 };
-
