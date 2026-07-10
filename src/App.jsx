@@ -278,27 +278,34 @@ function App({ user, onLogout }) {
     };
   }, [data]);
 
+  const matchesPeriodFilters = (dateValue) => {
+    if (!dateValue) return false;
+    if (filters.meses.length > 0 && !filters.meses.includes(getMonthYear(dateValue))) return false;
+    if (filters.dias.length > 0 && !filters.dias.includes(dateValue)) return false;
+    if (filters.semanas.length > 0 && !filters.semanas.includes(getWeekFromDate(dateValue))) return false;
+    return true;
+  };
+
+  const matchesDimensionFilters = (item) => {
+    if (filters.assuntos.length > 0 && !filters.assuntos.includes(item.assunto)) return false;
+    if (filters.abertopor.length > 0 && !filters.abertopor.includes(item.abertopor)) return false;
+    return true;
+  };
+
   const filteredByAbertura = useMemo(() => {
-    return data.filter(item => {
-      if (filters.meses.length > 0 && !filters.meses.includes(getMonthYear(item.dataAbertura))) return false;
-      if (filters.dias.length > 0 && !filters.dias.includes(item.dataAbertura)) return false;
-      if (filters.semanas.length > 0 && !filters.semanas.includes(item.semana)) return false;
-      if (filters.assuntos.length > 0 && !filters.assuntos.includes(item.assunto)) return false;
-      if (filters.abertopor.length > 0 && !filters.abertopor.includes(item.abertopor)) return false;
-      return true;
-    });
+    return data.filter(item => matchesPeriodFilters(item.dataAbertura) && matchesDimensionFilters(item));
   }, [data, filters]);
 
-  const filteredByFinalizacao = useMemo(
-    () => filteredByAbertura.filter(item => item.dataFinalizacao),
-    [filteredByAbertura]
-  );
+  const filteredByFinalizacao = useMemo(() => {
+    return data.filter(item => item.dataFinalizacao && matchesPeriodFilters(item.dataFinalizacao) && matchesDimensionFilters(item));
+  }, [data, filters]);
 
   const stats = useMemo(() => {
     const total = filteredByAbertura.length;
     const concluidos = filteredByFinalizacao.length;
-    const pendentes = filteredByAbertura.filter(item => !item.dataFinalizacao).length;
-    const resolucao = total > 0 ? Math.round((concluidos / total) * 100) : 0;
+    const concluidosDoPeriodoDeAbertura = filteredByAbertura.filter(item => item.dataFinalizacao && matchesPeriodFilters(item.dataFinalizacao)).length;
+    const pendentes = filteredByAbertura.filter(item => !item.dataFinalizacao || !matchesPeriodFilters(item.dataFinalizacao)).length;
+    const resolucao = total > 0 ? Math.round((concluidosDoPeriodoDeAbertura / total) * 100) : 0;
 
     const normalizeAnswer = (value) => String(value || '')
       .trim()
@@ -351,7 +358,7 @@ function App({ user, onLogout }) {
       bkoTotal,
       percBKO,
     };
-  }, [filteredByAbertura, filteredByFinalizacao]);
+  }, [filteredByAbertura, filteredByFinalizacao, filters]);
 
   const weeklyDataForChart = useMemo(() => {
     const weeksMap = {};
