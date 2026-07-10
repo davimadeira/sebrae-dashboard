@@ -15,7 +15,7 @@ const TopSubjects = ({ data = [] }) => {
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
+      .slice(0, 10);
   }, [data]);
 
   const total = data?.length || 0;

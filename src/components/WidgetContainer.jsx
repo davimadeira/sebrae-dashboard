@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { GripVertical, X, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, GripVertical, X, Maximize2, Minimize2 } from 'lucide-react';
 
 const WidgetContainer = ({
   id,
@@ -9,6 +9,8 @@ const WidgetContainer = ({
   children,
   isEditMode = false,
   onVisibilityChange,
+  onMoveUp,
+  onMoveDown,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -36,6 +38,20 @@ const WidgetContainer = ({
 
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
+            onClick={onMoveUp}
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Mover para cima"
+          >
+            <ArrowUp className="w-4 h-4 text-gray-500" />
+          </button>
+          <button
+            onClick={onMoveDown}
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Mover para baixo"
+          >
+            <ArrowDown className="w-4 h-4 text-gray-500" />
+          </button>
+          <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             title={isExpanded ? 'Recolher' : 'Expandir'}
@@ -59,7 +75,7 @@ const WidgetContainer = ({
         </div>
       </div>
 
-      <div className={`p-3 flex-1 min-h-0 ${id === 'dataTable' || id === 'topSubjects' ? 'overflow-auto' : 'overflow-hidden'} ${isExpanded ? 'min-h-[500px]' : ''}`}>
+      <div className={`p-3 flex-1 min-h-0 ${id === 'dataTable' || id === 'topSubjects' || id === 'performance' ? 'overflow-auto' : 'overflow-hidden'} ${isExpanded ? 'min-h-[500px]' : ''}`}>
         {children}
       </div>
     </motion.div>

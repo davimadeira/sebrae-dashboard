@@ -82,6 +82,29 @@ const DEFAULT_LAYOUTS = {
 const getDefaultLayouts = () => JSON.parse(JSON.stringify(DEFAULT_LAYOUTS));
 const DASHBOARD_LAYOUT_VERSION = '6';
 
+const reorderLayoutsByWidgets = (layouts, orderedWidgets) => {
+  const nextLayouts = {};
+
+  Object.entries(layouts).forEach(([breakpoint, layout]) => {
+    const cols = breakpoint === 'lg' ? 12 : breakpoint === 'md' ? 10 : 6;
+    let y = 0;
+
+    nextLayouts[breakpoint] = orderedWidgets.map(widget => {
+      const current = layout.find(item => item.i === widget.id) || { i: widget.id, w: cols, h: 4 };
+      const next = {
+        ...current,
+        x: 0,
+        y,
+        w: Math.min(current.w || cols, cols),
+      };
+      y += (next.h || 4) + 1;
+      return next;
+    });
+  });
+
+  return nextLayouts;
+};
+
 function App() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -107,6 +130,22 @@ function App() {
     { id: 'strategy', title: 'Estratégia de Atendimento', icon: 'Headphones', visible: true },
     { id: 'dataTable', title: 'Dados Detalhados', icon: 'BarChart3', visible: true },
   ]);
+
+  useEffect(() => {
+    const savedOrder = localStorage.getItem('widgets_order');
+    if (!savedOrder) return;
+
+    try {
+      const order = JSON.parse(savedOrder);
+      setWidgets(prev => {
+        const ordered = order
+          .map(id => prev.find(widget => widget.id === id))
+          .filter(Boolean);
+        const missing = prev.filter(widget => !ordered.find(item => item.id === widget.id));
+        return [...ordered, ...missing];
+      });
+    } catch (e) {}
+  }, []);
 
   // Layout do Grid (salvo no localStorage)
   const [layouts, setLayouts] = useState(() => {
@@ -153,6 +192,28 @@ function App() {
     localStorage.setItem('widgets_state', JSON.stringify(widgets.reduce((acc, w) => ({ ...acc, [w.id]: true }), {})));
     localStorage.setItem('dashboard_layouts', JSON.stringify(defaultLayouts));
     localStorage.setItem('dashboard_layout_version', DASHBOARD_LAYOUT_VERSION);
+  };
+
+  const moveWidget = (id, direction) => {
+    setWidgets(prev => {
+      const index = prev.findIndex(widget => widget.id === id);
+      const targetIndex = index + direction;
+
+      if (index < 0 || targetIndex < 0 || targetIndex >= prev.length) {
+        return prev;
+      }
+
+      const next = [...prev];
+      const [moved] = next.splice(index, 1);
+      next.splice(targetIndex, 0, moved);
+      setLayouts(currentLayouts => {
+        const nextLayouts = reorderLayoutsByWidgets(currentLayouts, next);
+        localStorage.setItem('dashboard_layouts', JSON.stringify(nextLayouts));
+        return nextLayouts;
+      });
+      localStorage.setItem('widgets_order', JSON.stringify(next.map(widget => widget.id)));
+      return next;
+    });
   };
 
   // Salvar layout no localStorage sempre que mudar
@@ -344,6 +405,8 @@ function App() {
           icon={IconComponent}
           isEditMode={isEditMode}
           onVisibilityChange={toggleWidget}
+          onMoveUp={() => moveWidget(widget.id, -1)}
+          onMoveDown={() => moveWidget(widget.id, 1)}
         >
           {renderWidgetContent(widget.id)}
         </WidgetContainer>
