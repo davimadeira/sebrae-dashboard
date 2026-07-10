@@ -25,7 +25,7 @@ const WeeklyChart = ({ data = [] }) => {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Evolução Semanal
+              {'Evolu\u00e7\u00e3o Semanal'}
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">Sem dados disponíveis</p>
           </div>
@@ -85,7 +85,7 @@ const WeeklyChart = ({ data = [] }) => {
               Evolução Semanal
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Média de {mediaSemanal} chamados por semana
+              {'M\u00e9dia de '}{mediaSemanal} chamados por semana
             </p>
           </div>
         </div>
@@ -97,11 +97,11 @@ const WeeklyChart = ({ data = [] }) => {
           </div>
           <div className="flex items-center gap-1">
             <span className="w-3 h-3 rounded-full bg-emerald-500" />
-            <span className="text-gray-600 dark:text-gray-300">Concluídos</span>
+            <span className="text-gray-600 dark:text-gray-300">{'Conclu\u00eddos'}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-gray-600 dark:text-gray-300">% Resolução</span>
+            <span className="text-gray-600 dark:text-gray-300">{'% Resolu\u00e7\u00e3o'}</span>
           </div>
         </div>
 
@@ -141,14 +141,14 @@ const WeeklyChart = ({ data = [] }) => {
                 fontSize: '12px'
               }}
               formatter={(value, name) => {
-                if (name === 'percResolucao') return [`${value}%`, '% Resolução'];
+                if (name === 'percResolucao') return [`${value}%`, '% Resolu\u00e7\u00e3o'];
                 return [value, name];
               }}
             />
             <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
             <Area type="monotone" dataKey="volumetria" name="Volumetria" yAxisId="left" fill="#FF6B00" fillOpacity={0.15} stroke="#FF6B00" strokeWidth={2} dot={{ fill: '#FF6B00', r: 4 }} activeDot={{ r: 6 }} />
-            <Line type="monotone" dataKey="concluidos" name="Concluídos" yAxisId="left" stroke="#10B981" strokeWidth={2.5} dot={{ fill: '#10B981', r: 4 }} activeDot={{ r: 6 }} />
-            <Line type="monotone" dataKey="percResolucao" name="% Resolução" yAxisId="right" stroke="#3B82F6" strokeWidth={2.5} strokeDasharray="5 5" dot={{ fill: '#3B82F6', r: 4 }} activeDot={{ r: 6 }} />
+            <Line type="monotone" dataKey="concluidos" name={'Conclu\u00eddos'} yAxisId="left" stroke="#10B981" strokeWidth={2.5} dot={{ fill: '#10B981', r: 4 }} activeDot={{ r: 6 }} />
+            <Line type="monotone" dataKey="percResolucao" name={'% Resolu\u00e7\u00e3o'} yAxisId="right" stroke="#3B82F6" strokeWidth={2.5} strokeDasharray="5 5" dot={{ fill: '#3B82F6', r: 4 }} activeDot={{ r: 6 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>

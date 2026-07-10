@@ -73,7 +73,7 @@ const ProcedentesChart = ({ data, selectedMonths = [] }) => {
   const totalProcedentes = chartData.reduce((sum, item) => sum + item.procedentes, 0);
   const totalGeral = chartData.reduce((sum, item) => sum + item.total, 0);
   const percGlobal = totalGeral > 0 ? Math.round((totalProcedentes / totalGeral) * 100) : 0;
-  const groupingLabel = groupByMonth ? 'mês de finalização' : 'data de finalização';
+  const groupingLabel = groupByMonth ? 'm\u00eas de finaliza\u00e7\u00e3o' : 'data de finaliza\u00e7\u00e3o';
 
   if (chartData.length === 0) {
     return (
@@ -99,7 +99,7 @@ const ProcedentesChart = ({ data, selectedMonths = [] }) => {
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-800 dark:text-white">
-              Evolução de Procedentes CNR
+              {'Evolu\u00e7\u00e3o de Procedentes CNR'}
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Por {groupingLabel}: {totalProcedentes} de {totalGeral} ({percGlobal}%)
@@ -112,7 +112,7 @@ const ProcedentesChart = ({ data, selectedMonths = [] }) => {
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Procedentes
           </span>
           <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-400" /> Não Procedentes
+            <span className="w-2.5 h-2.5 rounded-full bg-red-400" /> {'N\u00e3o Procedentes'}
           </span>
           <span className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300">
             <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> %
@@ -136,7 +136,7 @@ const ProcedentesChart = ({ data, selectedMonths = [] }) => {
             <YAxis yAxisId="left" tick={{ fill: 'currentColor', fontSize: 10 }} className="text-xs" />
             <YAxis yAxisId="right" orientation="right" domain={[0, 100]} tick={{ fill: 'currentColor', fontSize: 10 }} className="text-xs" />
             <Tooltip
-              labelFormatter={(label) => `${groupByMonth ? 'Mês' : 'Finalização'}: ${label}`}
+              labelFormatter={(label) => `${groupByMonth ? 'M\u00eas' : 'Finaliza\u00e7\u00e3o'}: ${label}`}
               contentStyle={{
                 backgroundColor: '#1F2937',
                 border: 'none',
@@ -147,13 +147,13 @@ const ProcedentesChart = ({ data, selectedMonths = [] }) => {
               formatter={(value, name) => {
                 if (name === 'percProcedentes') return [`${value}%`, '% Procedentes'];
                 if (name === 'procedentes') return [value, 'Procedentes CNR'];
-                if (name === 'naoProcedentes') return [value, 'Não Procedentes'];
+                if (name === 'naoProcedentes') return [value, 'N\u00e3o Procedentes'];
                 return [value, name];
               }}
             />
             <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }} />
             <Bar yAxisId="left" dataKey="procedentes" name="Procedentes CNR" fill="#10B981" radius={[4, 4, 0, 0]} />
-            <Bar yAxisId="left" dataKey="naoProcedentes" name="Não Procedentes" fill="#F87171" radius={[4, 4, 0, 0]} />
+            <Bar yAxisId="left" dataKey="naoProcedentes" name={'N\u00e3o Procedentes'} fill="#F87171" radius={[4, 4, 0, 0]} />
             <Line
               yAxisId="right"
               type="monotone"

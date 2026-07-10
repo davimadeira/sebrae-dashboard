@@ -122,11 +122,11 @@ function App({ user, onLogout }) {
   // ConfiguraÃ§Ã£o de widgets
   const [widgets, setWidgets] = useState([
     { id: 'kpis', title: 'KPIs', icon: 'BarChart3', visible: true },
-    { id: 'weekly', title: 'EvoluÃ§Ã£o Semanal', icon: 'Calendar', visible: true },
+    { id: 'weekly', title: 'Evolu\u00e7\u00e3o Semanal', icon: 'Calendar', visible: true },
     { id: 'topSubjects', title: 'Top Assuntos', icon: 'Award', visible: true },
     { id: 'emissor', title: 'Ã“rgÃ£o Emissor', icon: 'Building2', visible: true },
     { id: 'sla', title: 'SLA - Prazo de Atendimento', icon: 'Clock', visible: true },
-    { id: 'procedentes', title: 'EvoluÃ§Ã£o de Procedentes', icon: 'CheckCircle', visible: true },
+    { id: 'procedentes', title: 'Evolu\u00e7\u00e3o de Procedentes', icon: 'CheckCircle', visible: true },
     { id: 'performance', title: 'Performance da Equipe', icon: 'Users', visible: true },
     { id: 'semAutorizacao', title: 'Tickets sem AutorizaÃ§Ã£o', icon: 'AlertTriangle', visible: true },
     { id: 'strategy', title: 'EstratÃ©gia de Atendimento', icon: 'Headphones', visible: true },
@@ -265,7 +265,7 @@ function App({ user, onLogout }) {
     if (!data || data.length === 0) return { meses: [], semanas: [], dias: [], assuntos: [], abertopor: [] };
     const meses = new Set(), semanas = new Set(), dias = new Set(), assuntos = new Set(), abertopor = new Set();
     data.forEach(item => {
-      const mesAbertura = item.mes || getMonthYear(item.dataAbertura);
+      const mesAbertura = getMonthYear(item.dataAbertura);
       if (mesAbertura && mesAbertura !== 'NaN/NaN') meses.add(mesAbertura);
       if (item.semana && !item.semana.includes('classificaÃ§Ã£o')) semanas.add(item.semana);
       if (item.dataAbertura && item.dataAbertura !== '-') dias.add(item.dataAbertura);
@@ -280,7 +280,7 @@ function App({ user, onLogout }) {
 
   const filteredByAbertura = useMemo(() => {
     return data.filter(item => {
-      if (filters.meses.length > 0 && !filters.meses.includes(item.mes || getMonthYear(item.dataAbertura))) return false;
+      if (filters.meses.length > 0 && !filters.meses.includes(getMonthYear(item.dataAbertura))) return false;
       if (filters.dias.length > 0 && !filters.dias.includes(item.dataAbertura)) return false;
       if (filters.semanas.length > 0 && !filters.semanas.includes(item.semana)) return false;
       if (filters.assuntos.length > 0 && !filters.assuntos.includes(item.assunto)) return false;
@@ -289,35 +289,16 @@ function App({ user, onLogout }) {
     });
   }, [data, filters]);
 
-  const filteredByFinalizacao = useMemo(() => {
-    return data.filter(item => {
-      if (!item.dataFinalizacao) return false;
-      if (filters.meses.length > 0 && !filters.meses.includes(getMonthYear(item.dataFinalizacao))) return false;
-      if (filters.dias.length > 0 && !filters.dias.includes(item.dataFinalizacao)) return false;
-      if (filters.semanas.length > 0 && !filters.semanas.includes(getWeekFromDate(item.dataFinalizacao))) return false;
-      if (filters.assuntos.length > 0 && !filters.assuntos.includes(item.assunto)) return false;
-      if (filters.abertopor.length > 0 && !filters.abertopor.includes(item.abertopor)) return false;
-      return true;
-    });
-  }, [data, filters]);
+  const filteredByFinalizacao = useMemo(
+    () => filteredByAbertura.filter(item => item.dataFinalizacao),
+    [filteredByAbertura]
+  );
 
   const stats = useMemo(() => {
     const total = filteredByAbertura.length;
     const concluidos = filteredByFinalizacao.length;
-    const concluidosDoPeriodoDeAbertura = filteredByAbertura.filter(item => {
-      if (!item.dataFinalizacao) return false;
-
-      const mesFinalizacao = getMonthYear(item.dataFinalizacao);
-      if (!mesFinalizacao) return false;
-
-      if (filters.meses.length > 0) {
-        return filters.meses.includes(mesFinalizacao);
-      }
-
-      return mesFinalizacao === getMonthYear(item.dataAbertura);
-    }).length;
     const pendentes = filteredByAbertura.filter(item => !item.dataFinalizacao).length;
-    const resolucao = total > 0 ? Math.round((concluidosDoPeriodoDeAbertura / total) * 100) : 0;
+    const resolucao = total > 0 ? Math.round((concluidos / total) * 100) : 0;
 
     const normalizeAnswer = (value) => String(value || '')
       .trim()
@@ -370,7 +351,7 @@ function App({ user, onLogout }) {
       bkoTotal,
       percBKO,
     };
-  }, [filteredByAbertura, filteredByFinalizacao, filters.meses]);
+  }, [filteredByAbertura, filteredByFinalizacao]);
 
   const weeklyDataForChart = useMemo(() => {
     const weeksMap = {};
