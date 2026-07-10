@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { WidthProvider, Responsive } from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
@@ -34,10 +34,12 @@ import {
   Users,
   AlertTriangle,
   Edit2,
-  Headphones
+  Headphones,
+  LogOut,
+  UserCircle
 } from 'lucide-react';
 
-// Configuração inicial do Grid
+// ConfiguraÃ§Ã£o inicial do Grid
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const DEFAULT_LAYOUTS = {
@@ -105,7 +107,7 @@ const reorderLayoutsByWidgets = (layouts, orderedWidgets) => {
   return nextLayouts;
 };
 
-function App() {
+function App({ user, onLogout }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -117,17 +119,17 @@ function App() {
     meses: [], semanas: [], dias: [], assuntos: [], abertopor: []
   });
 
-  // Configuração de widgets
+  // ConfiguraÃ§Ã£o de widgets
   const [widgets, setWidgets] = useState([
     { id: 'kpis', title: 'KPIs', icon: 'BarChart3', visible: true },
-    { id: 'weekly', title: 'Evolução Semanal', icon: 'Calendar', visible: true },
+    { id: 'weekly', title: 'EvoluÃ§Ã£o Semanal', icon: 'Calendar', visible: true },
     { id: 'topSubjects', title: 'Top Assuntos', icon: 'Award', visible: true },
-    { id: 'emissor', title: 'Órgão Emissor', icon: 'Building2', visible: true },
+    { id: 'emissor', title: 'Ã“rgÃ£o Emissor', icon: 'Building2', visible: true },
     { id: 'sla', title: 'SLA - Prazo de Atendimento', icon: 'Clock', visible: true },
-    { id: 'procedentes', title: 'Evolução de Procedentes', icon: 'CheckCircle', visible: true },
+    { id: 'procedentes', title: 'EvoluÃ§Ã£o de Procedentes', icon: 'CheckCircle', visible: true },
     { id: 'performance', title: 'Performance da Equipe', icon: 'Users', visible: true },
-    { id: 'semAutorizacao', title: 'Tickets sem Autorização', icon: 'AlertTriangle', visible: true },
-    { id: 'strategy', title: 'Estratégia de Atendimento', icon: 'Headphones', visible: true },
+    { id: 'semAutorizacao', title: 'Tickets sem AutorizaÃ§Ã£o', icon: 'AlertTriangle', visible: true },
+    { id: 'strategy', title: 'EstratÃ©gia de Atendimento', icon: 'Headphones', visible: true },
     { id: 'dataTable', title: 'Dados Detalhados', icon: 'BarChart3', visible: true },
   ]);
 
@@ -154,7 +156,7 @@ function App() {
     if (saved && savedVersion === DASHBOARD_LAYOUT_VERSION) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    // Layout padrão (12 colunas de largura total)
+    // Layout padrÃ£o (12 colunas de largura total)
     return getDefaultLayouts();
   });
 
@@ -235,7 +237,7 @@ function App() {
     setError(null);
     try {
       const rawData = await fetchSheetData();
-      if (!rawData) throw new Error('Não foi possível carregar os dados da planilha');
+      if (!rawData) throw new Error('NÃ£o foi possÃ­vel carregar os dados da planilha');
       setData(formatSheetData(rawData));
       setLastUpdate(new Date());
     } catch (err) {
@@ -257,7 +259,7 @@ function App() {
     data.forEach(item => {
       const mesAbertura = item.mes || getMonthYear(item.dataAbertura);
       if (mesAbertura && mesAbertura !== 'NaN/NaN') meses.add(mesAbertura);
-      if (item.semana && !item.semana.includes('classificação')) semanas.add(item.semana);
+      if (item.semana && !item.semana.includes('classificaÃ§Ã£o')) semanas.add(item.semana);
       if (item.dataAbertura && item.dataAbertura !== '-') dias.add(item.dataAbertura);
       if (item.assunto) assuntos.add(item.assunto);
       if (item.abertopor) abertopor.add(item.abertopor);
@@ -312,12 +314,12 @@ function App() {
     const getAnswer = (value) => String(value || '').trim().toUpperCase();
     const hasAnswer = (value) => {
       const answer = getAnswer(value);
-      return answer === 'SIM' || answer === 'NÃO' || answer === 'NAO';
+      return answer === 'SIM' || answer === 'NÃƒO' || answer === 'NAO';
     };
     const isYes = (value) => getAnswer(value) === 'SIM';
     const isNo = (value) => {
       const answer = getAnswer(value);
-      return answer === 'NÃO' || answer === 'NAO';
+      return answer === 'NÃƒO' || answer === 'NAO';
     };
 
     const cnrRows = filteredByFinalizacao.filter(d => hasAnswer(d.procedentesCNR));
@@ -359,7 +361,7 @@ function App() {
   const weeklyDataForChart = useMemo(() => {
     const weeksMap = {};
     filteredByAbertura.forEach(item => {
-      const week = item.semana || 'Semana sem classificação';
+      const week = item.semana || 'Semana sem classificaÃ§Ã£o';
       if (!weeksMap[week]) weeksMap[week] = { semana: week, volumetria: 0, concluidos: 0, pendentes: 0 };
       weeksMap[week].volumetria += 1;
       if (!item.dataFinalizacao) weeksMap[week].pendentes += 1;
@@ -453,7 +455,18 @@ function App() {
                 <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Editar</span>
               </button>
             )}
+                        {user && (
+              <div className="hidden md:flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300">
+                <UserCircle className="w-4 h-4 text-sebrae-blue" />
+                <span className="max-w-[190px] truncate">{user.email}</span>
+              </div>
+            )}
             <WidgetControls widgets={widgets} onToggleWidget={toggleWidget} onResetWidgets={resetWidgets} />
+            {onLogout && (
+              <button onClick={onLogout} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:border-sebrae-orange hover:text-sebrae-orange transition-colors text-xs sm:text-sm">
+                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Sair</span>
+              </button>
+            )}
             <ThemeToggle />
             <button onClick={loadData} className="flex items-center gap-1 bg-sebrae-orange text-white px-2.5 py-1.5 rounded-lg hover:bg-orange-600 transition-colors text-xs sm:text-sm">
               <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Atualizar</span>
@@ -469,7 +482,7 @@ function App() {
           {visibleWidgets.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-8 text-center">
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Todos os widgets estão ocultos.
+                Todos os widgets estÃ£o ocultos.
               </p>
               <button
                 onClick={resetWidgets}
@@ -500,7 +513,7 @@ function App() {
 
         {/* Footer */}
         <footer className="mt-8 text-center text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
-          {data.length} chamados carregados | {stats.cnrSim || 0} procedentes CNR ({stats.percCNR || 0}%) | Última atualização: {lastUpdate?.toLocaleString('pt-BR')}
+          {data.length} chamados carregados | {stats.cnrSim || 0} procedentes CNR ({stats.percCNR || 0}%) | Ãšltima atualizaÃ§Ã£o: {lastUpdate?.toLocaleString('pt-BR')}
         </footer>
 
       </div>
@@ -509,3 +522,4 @@ function App() {
 }
 
 export default App;
+
