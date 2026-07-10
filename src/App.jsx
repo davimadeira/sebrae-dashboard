@@ -340,9 +340,11 @@ function App({ user, onLogout }) {
     const cnrTotal = cnrRows.length;
     const percCNR = cnrTotal > 0 ? Math.round((cnrSim / cnrTotal) * 100) : 0;
 
-    const bkoRows = filteredByFinalizacao.filter(d => hasAnswer(d.procedentesBKO));
+    // No BKO, uma célula vazia representa retorno não procedente.
+    const isBkoNo = (value) => !normalizeAnswer(value) || isNo(value);
+    const bkoRows = filteredByFinalizacao.filter(d => isYes(d.procedentesBKO) || isBkoNo(d.procedentesBKO));
     const bkoSim = bkoRows.filter(d => isYes(d.procedentesBKO)).length;
-    const bkoNao = bkoRows.filter(d => isNo(d.procedentesBKO)).length;
+    const bkoNao = bkoRows.filter(d => isBkoNo(d.procedentesBKO)).length;
     const bkoTotal = bkoRows.length;
     const percBKO = bkoTotal > 0 ? Math.round((bkoSim / bkoTotal) * 100) : 0;
 
