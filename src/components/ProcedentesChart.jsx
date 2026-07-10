@@ -14,7 +14,11 @@ import { motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 import { formatDateBR, getMonthYear, parseDateValue } from '../utils/dateHelpers';
 
-const normalizeAnswer = (value) => String(value || '').trim().toUpperCase();
+const normalizeAnswer = (value) => String(value || '')
+  .trim()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toUpperCase();
 
 const ProcedentesChart = ({ data, selectedMonths = [] }) => {
   const groupByMonth = selectedMonths.length === 0;

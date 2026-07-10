@@ -1,5 +1,5 @@
 const SHEET_ID = '1sq5V2qrF91laGglRf6CByHOl5w6SnlVcTyGxNBZ63nw';
-const RANGE = 'Preenchimento!A:T';
+const RANGE = 'Preenchimento!A:U';
 
 export default async function handler(req, res) {
   const apiKey = process.env.GOOGLE_SHEETS_API_KEY || 'AIzaSyBPlmaOy6GWnZFInYi1vVojS47r02UcE38';

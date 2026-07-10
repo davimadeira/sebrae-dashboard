@@ -25,18 +25,18 @@ const WidgetContainer = ({
       } h-full flex flex-col overflow-hidden`}
     >
       <div
-        className="draggable-handle flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 shrink-0 cursor-move select-none"
-        title="Arraste para mover o widget"
+        className={`draggable-handle flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 shrink-0 select-none ${isEditMode ? 'cursor-move' : ''}`}
+        title={isEditMode ? 'Arraste para mover o widget' : undefined}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <GripVertical className="w-4 h-4 text-sebrae-orange flex-shrink-0" />
+          {isEditMode && <GripVertical className="w-4 h-4 text-sebrae-orange flex-shrink-0" />}
           {Icon && <Icon className="w-4 h-4 text-sebrae-blue flex-shrink-0" />}
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
             {title}
           </h3>
         </div>
 
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className={`flex items-center gap-1 flex-shrink-0 ${isEditMode ? '' : 'hidden'}`}>
           <button
             onClick={onMoveUp}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

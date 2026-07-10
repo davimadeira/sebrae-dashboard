@@ -12,7 +12,7 @@ export const fetchSheetData = async () => {
     if (import.meta.env.PROD) {
       url = '/api/sheets'; 
     } else {
-      url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Preenchimento!A:T?key=${API_KEY}`;
+      url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Preenchimento!A:U?key=${API_KEY}`;
     }
 
     const response = await fetch(url);

@@ -180,6 +180,8 @@ function App({ user, onLogout }) {
   };
 
   const toggleWidget = (id) => {
+    if (!isEditMode) return;
+
     setWidgets(prev => {
       const newState = prev.map(w => w.id === id ? { ...w, visible: !w.visible } : w);
       localStorage.setItem('widgets_state', JSON.stringify(newState.reduce((acc, w) => ({ ...acc, [w.id]: w.visible }), {})));
@@ -188,6 +190,8 @@ function App({ user, onLogout }) {
   };
 
   const resetWidgets = () => {
+    if (!isEditMode) return;
+
     const defaultLayouts = getDefaultLayouts();
     setWidgets(prev => prev.map(w => ({ ...w, visible: true })));
     setLayouts(defaultLayouts);
@@ -197,6 +201,8 @@ function App({ user, onLogout }) {
   };
 
   const moveWidget = (id, direction) => {
+    if (!isEditMode) return;
+
     setWidgets(prev => {
       const index = prev.findIndex(widget => widget.id === id);
       const targetIndex = index + direction;
@@ -220,6 +226,8 @@ function App({ user, onLogout }) {
 
   // Salvar layout no localStorage sempre que mudar
   const onLayoutChange = (currentLayout, allLayouts) => {
+    if (!isEditMode) return;
+
     setLayouts(allLayouts);
     localStorage.setItem('dashboard_layouts', JSON.stringify(allLayouts));
     localStorage.setItem('dashboard_layout_version', DASHBOARD_LAYOUT_VERSION);
@@ -311,14 +319,18 @@ function App({ user, onLogout }) {
     const pendentes = filteredByAbertura.filter(item => !item.dataFinalizacao).length;
     const resolucao = total > 0 ? Math.round((concluidosDoPeriodoDeAbertura / total) * 100) : 0;
 
-    const getAnswer = (value) => String(value || '').trim().toUpperCase();
+    const normalizeAnswer = (value) => String(value || '')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase();
     const hasAnswer = (value) => {
-      const answer = getAnswer(value);
+      const answer = normalizeAnswer(value);
       return answer === 'SIM' || answer === 'NÃƒO' || answer === 'NAO';
     };
-    const isYes = (value) => getAnswer(value) === 'SIM';
+    const isYes = (value) => normalizeAnswer(value) === 'SIM';
     const isNo = (value) => {
-      const answer = getAnswer(value);
+      const answer = normalizeAnswer(value);
       return answer === 'NÃƒO' || answer === 'NAO';
     };
 
@@ -461,7 +473,9 @@ function App({ user, onLogout }) {
                 <span className="max-w-[190px] truncate">{user.email}</span>
               </div>
             )}
-            <WidgetControls widgets={widgets} onToggleWidget={toggleWidget} onResetWidgets={resetWidgets} />
+            {isEditMode && (
+              <WidgetControls widgets={widgets} onToggleWidget={toggleWidget} onResetWidgets={resetWidgets} />
+            )}
             {onLogout && (
               <button onClick={onLogout} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:border-sebrae-orange hover:text-sebrae-orange transition-colors text-xs sm:text-sm">
                 <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Sair</span>
@@ -484,12 +498,14 @@ function App({ user, onLogout }) {
               <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Todos os widgets estÃ£o ocultos.
               </p>
-              <button
-                onClick={resetWidgets}
-                className="bg-sebrae-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
-              >
-                Restaurar widgets
-              </button>
+              {isEditMode && (
+                <button
+                  onClick={resetWidgets}
+                  className="bg-sebrae-orange text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm"
+                >
+                  Restaurar widgets
+                </button>
+              )}
             </div>
           ) : (
             <ResponsiveGridLayout
@@ -501,8 +517,8 @@ function App({ user, onLogout }) {
               margin={[16, 16]}
               containerPadding={[0, 0]}
               draggableHandle=".draggable-handle"
-              isDraggable
-              isResizable
+              isDraggable={isEditMode}
+              isResizable={isEditMode}
               resizeHandles={['se', 's', 'e']}
               onLayoutChange={onLayoutChange}
             >
