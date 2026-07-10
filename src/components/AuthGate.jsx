@@ -1,14 +1,15 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
 } from 'firebase/auth';
-import { AlertCircle, Loader2, LockKeyhole, LogIn, UserPlus } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, LockKeyhole, LogIn, MailCheck, UserPlus } from 'lucide-react';
 import sebraeLogo from '../logo-sebrae.png';
 import {
   allowedEmailDomain,
@@ -27,6 +28,11 @@ const getFriendlyAuthError = (error) => {
   if (code.includes('too-many-requests')) return 'Muitas tentativas. Aguarde um pouco e tente novamente.';
   return error?.message || 'Nao foi possivel concluir o acesso.';
 };
+
+const getVerificationSettings = () => ({
+  url: window.location.origin,
+  handleCodeInApp: false,
+});
 
 const AuthGate = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -65,6 +71,11 @@ const AuthGate = ({ children }) => {
     setAuthMessage('');
   };
 
+  const sendVerificationLink = async (targetUser) => {
+    await sendEmailVerification(targetUser, getVerificationSettings());
+    setAuthMessage('Enviamos um link de confirmacao para o seu e-mail. Abra sua caixa de entrada e confirme para liberar o dashboard.');
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!auth) return;
@@ -91,8 +102,12 @@ const AuthGate = ({ children }) => {
         if (form.name.trim()) {
           await updateProfile(result.user, { displayName: form.name.trim() });
         }
+        await sendVerificationLink(result.user);
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        if (!result.user.emailVerified) {
+          setAuthMessage('Sua conta existe, mas o e-mail ainda nao foi confirmado. Confirme pelo link enviado para liberar o dashboard.');
+        }
       }
     } catch (error) {
       setAuthError(getFriendlyAuthError(error));
@@ -130,6 +145,38 @@ const AuthGate = ({ children }) => {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!user) return;
+    setSubmitting(true);
+    setAuthError('');
+    setAuthMessage('');
+    try {
+      await sendVerificationLink(user);
+    } catch (error) {
+      setAuthError(getFriendlyAuthError(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRefreshVerification = async () => {
+    if (!user) return;
+    setSubmitting(true);
+    setAuthError('');
+    setAuthMessage('');
+    try {
+      await user.reload();
+      setUser({ ...auth.currentUser });
+      if (!auth.currentUser?.emailVerified) {
+        setAuthMessage('Ainda nao identificamos a confirmacao. Depois de clicar no link do e-mail, tente novamente.');
+      }
+    } catch (error) {
+      setAuthError(getFriendlyAuthError(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleLogout = () => signOut(auth);
 
   if (checking) {
@@ -154,8 +201,66 @@ const AuthGate = ({ children }) => {
     );
   }
 
-  if (user) {
+  if (user?.emailVerified) {
     return children({ user, onLogout: handleLogout });
+  }
+
+  if (user && !user.emailVerified) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors duration-300">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sebrae-lg p-7 text-center"
+        >
+          <div className="w-14 h-14 rounded-xl bg-sebrae-blue/10 flex items-center justify-center mx-auto mb-5">
+            <MailCheck className="w-7 h-7 text-sebrae-blue" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Confirme seu e-mail</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            Enviamos um link de confirmacao para <strong>{user.email}</strong>. Clique no link recebido para provar que esse e-mail existe e liberar o dashboard.
+          </p>
+
+          {authError && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300 text-left">
+              {authError}
+            </div>
+          )}
+          {authMessage && (
+            <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300 text-left">
+              {authMessage}
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleRefreshVerification}
+              disabled={submitting}
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-sebrae-blue px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-sebrae-blueDark disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              Ja confirmei
+            </button>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 transition-colors hover:border-sebrae-orange hover:text-sebrae-orange disabled:opacity-70"
+            >
+              Reenviar link
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-sebrae-orange transition-colors"
+            >
+              Usar outro e-mail
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
   }
 
   const isSignup = mode === 'signup';
@@ -178,7 +283,7 @@ const AuthGate = ({ children }) => {
           {isSignup ? 'Criar conta' : 'Entrar no dashboard'}
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-          {isSignup ? 'Crie seu acesso com e-mail e senha.' : 'Entre com seu e-mail e senha cadastrados.'}
+          {isSignup ? 'Crie seu acesso com e-mail e senha. Depois, confirme o link recebido no e-mail.' : 'Entre com seu e-mail e senha cadastrados.'}
           {allowedEmailDomain ? ` Use e-mail @${allowedEmailDomain}.` : ''}
         </p>
 
@@ -238,7 +343,7 @@ const AuthGate = ({ children }) => {
             className="w-full flex items-center justify-center gap-2 rounded-lg bg-sebrae-blue px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-sebrae-blueDark disabled:cursor-not-allowed disabled:opacity-70"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : isSignup ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-            {isSignup ? 'Criar conta' : 'Entrar'}
+            {isSignup ? 'Criar conta e enviar confirmacao' : 'Entrar'}
           </button>
         </form>
 
