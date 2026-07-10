@@ -22,6 +22,7 @@ import WidgetContainer from './components/WidgetContainer';
 import WidgetControls from './components/WidgetControls';
 import PasswordModal from './components/PasswordModal';
 import EditModeIndicator from './components/EditModeIndicator';
+import AdminPanel from './components/AdminPanel';
 import { 
   AlertCircle, 
   RefreshCw, 
@@ -83,6 +84,10 @@ const DEFAULT_LAYOUTS = {
 
 const getDefaultLayouts = () => JSON.parse(JSON.stringify(DEFAULT_LAYOUTS));
 const DASHBOARD_LAYOUT_VERSION = '6';
+const BOOTSTRAP_ADMIN_EMAILS = (import.meta.env.VITE_INITIAL_ADMIN_EMAILS || 'davimadeira@sollobrasil.com.br')
+  .split(',')
+  .map(email => email.trim().toLowerCase())
+  .filter(Boolean);
 
 const reorderLayoutsByWidgets = (layouts, orderedWidgets) => {
   const nextLayouts = {};
@@ -114,6 +119,18 @@ function App({ user, onLogout }) {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!user) return undefined;
+    const isBootstrapAdmin = BOOTSTRAP_ADMIN_EMAILS.includes(user.email?.toLowerCase());
+    user.getIdTokenResult().then(result => {
+      if (active) setIsAdmin(isBootstrapAdmin || Boolean(result.claims.admin));
+    }).catch(() => active && setIsAdmin(isBootstrapAdmin));
+    return () => { active = false; };
+  }, [user]);
 
   const [filters, setFilters] = useState({
     meses: [], semanas: [], dias: [], assuntos: [], abertopor: []
@@ -443,6 +460,7 @@ function App({ user, onLogout }) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <EditModeIndicator isEditMode={isEditMode} onExit={exitEditMode} />
       <PasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} onSuccess={handlePasswordSuccess} />
+      {showAdminPanel && <AdminPanel user={user} onClose={() => setShowAdminPanel(false)} />}
 
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
         
@@ -462,6 +480,11 @@ function App({ user, onLogout }) {
                 <UserCircle className="w-4 h-4 text-sebrae-blue" />
                 <span className="max-w-[190px] truncate">{user.email}</span>
               </div>
+            )}
+            {isAdmin && (
+              <button onClick={() => setShowAdminPanel(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-sebrae-blue/10 text-sebrae-blue rounded-lg hover:bg-sebrae-blue/20 transition-colors text-xs sm:text-sm">
+                <UserCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span>Administração</span>
+              </button>
             )}
             {isEditMode && (
               <WidgetControls widgets={widgets} onToggleWidget={toggleWidget} onResetWidgets={resetWidgets} />
