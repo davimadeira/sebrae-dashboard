@@ -15,6 +15,19 @@ const validatePassword = password => {
   if (!strongPassword(password)) throw Object.assign(new Error('A senha deve ter 8+ caracteres, maiúscula, minúscula, número e símbolo.'), { statusCode: 400 });
   return password;
 };
+const validateDisplayName = name => {
+  const normalized = String(name || '').trim();
+  if (!normalized) throw Object.assign(new Error('Informe o nome do usuário.'), { statusCode: 400 });
+  if (normalized.length > 120) throw Object.assign(new Error('O nome deve ter no máximo 120 caracteres.'), { statusCode: 400 });
+  return normalized;
+};
+
+const createDashboardUser = async (adminAuth, input) => adminAuth.createUser({
+  email: validateEmail(input.email),
+  password: validatePassword(input.password),
+  displayName: validateDisplayName(input.displayName),
+  emailVerified: true,
+});
 
 export default async function handler(req, res) {
   try {
@@ -25,10 +38,46 @@ export default async function handler(req, res) {
     }
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido.' });
 
-    const { action, uid, email, displayName, password, disabled, admin } = req.body || {};
+    const { action, uid, email, displayName, password, disabled, admin, users } = req.body || {};
     if (action === 'create') {
-      const user = await adminAuth.createUser({ email: validateEmail(email), password: validatePassword(password), displayName: String(displayName || '').trim(), emailVerified: true });
+      const user = await createDashboardUser(adminAuth, { email, displayName, password });
       return res.status(201).json({ user: userDto(user) });
+    }
+    if (action === 'bulkImport') {
+      if (!Array.isArray(users) || users.length === 0) throw Object.assign(new Error('Selecione um CSV com ao menos um usuário.'), { statusCode: 400 });
+      if (users.length > 200) throw Object.assign(new Error('O CSV pode ter no máximo 200 usuários por importação.'), { statusCode: 400 });
+
+      const normalizedUsers = users.map((item, index) => ({
+        line: index + 2,
+        displayName: validateDisplayName(item?.displayName),
+        email: validateEmail(item?.email),
+        password: validatePassword(item?.password),
+      }));
+      const duplicates = normalizedUsers.filter((item, index) => normalizedUsers.findIndex(candidate => candidate.email === item.email) !== index);
+      if (duplicates.length) throw Object.assign(new Error(`Há e-mails repetidos no CSV: ${[...new Set(duplicates.map(item => item.email))].join(', ')}.`), { statusCode: 400 });
+
+      const created = [];
+      const errors = [];
+      for (const item of normalizedUsers) {
+        try {
+          const createdUser = await createDashboardUser(adminAuth, item);
+          created.push(userDto(createdUser));
+        } catch (error) {
+          errors.push({ line: item.line, email: item.email, error: error.code === 'auth/email-already-exists' ? 'E-mail já cadastrado.' : error.message || 'Não foi possível criar este usuário.' });
+        }
+      }
+      return res.status(errors.length ? 207 : 201).json({ created, errors });
+    }
+    if (action === 'updateProfile') {
+      const existing = await adminAuth.getUser(uid);
+      const user = await adminAuth.updateUser(uid, {
+        displayName: validateDisplayName(displayName),
+        email: validateEmail(email),
+      });
+      if (existing.email?.toLowerCase() !== user.email?.toLowerCase() && bootstrapEmails.includes(existing.email?.toLowerCase())) {
+        await adminAuth.setCustomUserClaims(uid, { ...(existing.customClaims || {}), admin: true });
+      }
+      return res.status(200).json({ user: userDto(user) });
     }
     if (action === 'resetPassword') {
       const user = await adminAuth.updateUser(uid, { password: validatePassword(password) });

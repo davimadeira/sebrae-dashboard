@@ -23,6 +23,7 @@ import WidgetControls from './components/WidgetControls';
 import PasswordModal from './components/PasswordModal';
 import EditModeIndicator from './components/EditModeIndicator';
 import AdminPanel from './components/AdminPanel';
+import AccountModal from './components/AccountModal';
 import { 
   AlertCircle, 
   RefreshCw, 
@@ -36,6 +37,7 @@ import {
   AlertTriangle,
   Edit2,
   Headphones,
+  KeyRound,
   LogOut,
   UserCircle
 } from 'lucide-react';
@@ -119,6 +121,7 @@ function App({ user, onLogout }) {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -460,6 +463,7 @@ function App({ user, onLogout }) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <EditModeIndicator isEditMode={isEditMode} onExit={exitEditMode} />
       <PasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} onSuccess={handlePasswordSuccess} />
+      <AccountModal isOpen={showAccountModal} onClose={() => setShowAccountModal(false)} user={user} />
       {showAdminPanel && <AdminPanel user={user} onClose={() => setShowAdminPanel(false)} />}
 
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
@@ -475,11 +479,16 @@ function App({ user, onLogout }) {
                 <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Editar</span>
               </button>
             )}
-                        {user && (
+            {user && (
               <div className="hidden md:flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300">
                 <UserCircle className="w-4 h-4 text-sebrae-blue" />
                 <span className="max-w-[190px] truncate">{user.email}</span>
               </div>
+            )}
+            {user && (
+              <button onClick={() => setShowAccountModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:border-sebrae-blue hover:text-sebrae-blue transition-colors text-xs sm:text-sm">
+                <KeyRound className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Minha senha</span>
+              </button>
             )}
             {isAdmin && (
               <button onClick={() => setShowAdminPanel(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-sebrae-blue/10 text-sebrae-blue rounded-lg hover:bg-sebrae-blue/20 transition-colors text-xs sm:text-sm">
