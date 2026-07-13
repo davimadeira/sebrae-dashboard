@@ -11,7 +11,7 @@ import {
 const KPICards = ({ stats }) => {
   const cards = [
     {
-      title: 'Total de Chamados',
+      title: 'Volume',
       value: stats.total,
       icon: TrendingUp,
       color: 'bg-sebrae-blue',
