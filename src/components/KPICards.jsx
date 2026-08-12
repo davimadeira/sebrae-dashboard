@@ -22,7 +22,7 @@ const KPICards = ({ stats }) => {
       value: stats.concluidos,
       icon: CheckCircle,
       color: 'bg-emerald-500',
-      description: `${stats.resolucao}% de resolução`,
+      description: `${stats.concluidosIniciadosNoPeriodo || 0} iniciados no período (${stats.percConcluidosIniciados || 0}%)`,
     },
     {
       title: 'Pendentes',

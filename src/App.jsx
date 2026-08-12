@@ -324,6 +324,8 @@ function App({ user, onLogout }) {
     const total = filteredByAbertura.length;
     const concluidos = filteredByFinalizacao.length;
     const concluidosDoPeriodoDeAbertura = filteredByAbertura.filter(item => item.dataFinalizacao && matchesPeriodFilters(item.dataFinalizacao)).length;
+    const concluidosIniciadosNoPeriodo = filteredByFinalizacao.filter(item => matchesPeriodFilters(item.dataAbertura)).length;
+    const percConcluidosIniciados = concluidos > 0 ? Math.round((concluidosIniciadosNoPeriodo / concluidos) * 100) : 0;
     const pendentes = filteredByAbertura.filter(item => !item.dataFinalizacao || !matchesPeriodFilters(item.dataFinalizacao)).length;
     const resolucao = total > 0 ? Math.round((concluidosDoPeriodoDeAbertura / total) * 100) : 0;
 
@@ -365,6 +367,8 @@ function App({ user, onLogout }) {
     return {
       total,
       concluidos,
+      concluidosIniciadosNoPeriodo,
+      percConcluidosIniciados,
       pendentes,
       resolucao,
       chat,
