@@ -17,6 +17,7 @@ import EmissorChart from './components/EmissorChart';
 import SemAutorizacaoChart from './components/SemAutorizacaoChart';
 import SLAChart from './components/SLAChart';
 import ProcedentesChart from './components/ProcedentesChart';
+import ImprocedentesTable from './components/ImprocedentesTable';
 import StrategyChart from './components/StrategyChart';
 import WidgetContainer from './components/WidgetContainer';
 import WidgetControls from './components/WidgetControls';
@@ -53,10 +54,11 @@ const DEFAULT_LAYOUTS = {
     { i: 'emissor', x: 0, y: 15, w: 6, h: 4 },
     { i: 'sla', x: 6, y: 15, w: 6, h: 4 },
     { i: 'procedentes', x: 0, y: 20, w: 12, h: 5 },
-    { i: 'strategy', x: 0, y: 26, w: 6, h: 4 },
-    { i: 'performance', x: 6, y: 26, w: 6, h: 4 },
-    { i: 'semAutorizacao', x: 0, y: 31, w: 12, h: 4 },
-    { i: 'dataTable', x: 0, y: 36, w: 12, h: 5 },
+    { i: 'improcedentes', x: 0, y: 26, w: 12, h: 5 },
+    { i: 'strategy', x: 0, y: 32, w: 6, h: 4 },
+    { i: 'performance', x: 6, y: 32, w: 6, h: 4 },
+    { i: 'semAutorizacao', x: 0, y: 37, w: 12, h: 4 },
+    { i: 'dataTable', x: 0, y: 42, w: 12, h: 5 },
   ],
   md: [
     { i: 'kpis', x: 0, y: 0, w: 10, h: 2 },
@@ -65,10 +67,11 @@ const DEFAULT_LAYOUTS = {
     { i: 'emissor', x: 0, y: 15, w: 5, h: 4 },
     { i: 'sla', x: 5, y: 15, w: 5, h: 4 },
     { i: 'procedentes', x: 0, y: 20, w: 10, h: 5 },
-    { i: 'strategy', x: 0, y: 26, w: 5, h: 4 },
-    { i: 'performance', x: 5, y: 26, w: 5, h: 4 },
-    { i: 'semAutorizacao', x: 0, y: 31, w: 10, h: 4 },
-    { i: 'dataTable', x: 0, y: 36, w: 10, h: 5 },
+    { i: 'improcedentes', x: 0, y: 26, w: 10, h: 5 },
+    { i: 'strategy', x: 0, y: 32, w: 5, h: 4 },
+    { i: 'performance', x: 5, y: 32, w: 5, h: 4 },
+    { i: 'semAutorizacao', x: 0, y: 37, w: 10, h: 4 },
+    { i: 'dataTable', x: 0, y: 42, w: 10, h: 5 },
   ],
   sm: [
     { i: 'kpis', x: 0, y: 0, w: 6, h: 3 },
@@ -77,15 +80,16 @@ const DEFAULT_LAYOUTS = {
     { i: 'emissor', x: 0, y: 15, w: 6, h: 4 },
     { i: 'sla', x: 0, y: 20, w: 6, h: 4 },
     { i: 'procedentes', x: 0, y: 25, w: 6, h: 5 },
-    { i: 'strategy', x: 0, y: 31, w: 6, h: 4 },
-    { i: 'performance', x: 0, y: 36, w: 6, h: 4 },
-    { i: 'semAutorizacao', x: 0, y: 41, w: 6, h: 4 },
-    { i: 'dataTable', x: 0, y: 46, w: 6, h: 5 },
+    { i: 'improcedentes', x: 0, y: 31, w: 6, h: 5 },
+    { i: 'strategy', x: 0, y: 37, w: 6, h: 4 },
+    { i: 'performance', x: 0, y: 42, w: 6, h: 4 },
+    { i: 'semAutorizacao', x: 0, y: 47, w: 6, h: 4 },
+    { i: 'dataTable', x: 0, y: 52, w: 6, h: 5 },
   ],
 };
 
 const getDefaultLayouts = () => JSON.parse(JSON.stringify(DEFAULT_LAYOUTS));
-const DASHBOARD_LAYOUT_VERSION = '6';
+const DASHBOARD_LAYOUT_VERSION = '7';
 const BOOTSTRAP_ADMIN_EMAILS = (import.meta.env.VITE_INITIAL_ADMIN_EMAILS || 'davimadeira@sollobrasil.com.br')
   .split(',')
   .map(email => email.trim().toLowerCase())
@@ -147,6 +151,7 @@ function App({ user, onLogout }) {
     { id: 'emissor', title: 'Ã“rgÃ£o Emissor', icon: 'Building2', visible: true },
     { id: 'sla', title: 'SLA - Prazo de Atendimento', icon: 'Clock', visible: true },
     { id: 'procedentes', title: 'Evolu\u00e7\u00e3o de Procedentes', icon: 'CheckCircle', visible: true },
+    { id: 'improcedentes', title: 'Tickets Improcedentes', icon: 'AlertTriangle', visible: true },
     { id: 'performance', title: 'Performance da Equipe', icon: 'Users', visible: true },
     { id: 'semAutorizacao', title: 'Tickets sem AutorizaÃ§Ã£o', icon: 'AlertTriangle', visible: true },
     { id: 'strategy', title: 'EstratÃ©gia de Atendimento', icon: 'Headphones', visible: true },
@@ -412,6 +417,7 @@ function App({ user, onLogout }) {
       emissor: <EmissorChart data={filteredByAbertura} />,
       sla: <SLAChart data={filteredByAbertura} />,
       procedentes: <ProcedentesChart data={filteredByFinalizacao} selectedMonths={filters.meses} />,
+      improcedentes: <ImprocedentesTable data={filteredByFinalizacao} />,
       performance: <PerformanceChart data={filteredByAbertura} />,
       semAutorizacao: <SemAutorizacaoChart data={filteredByAbertura} />,
       strategy: <StrategyChart data={filteredByAbertura} />,

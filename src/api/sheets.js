@@ -74,6 +74,8 @@ export const formatSheetData = (rawData) => {
           obj.abertopor = value;
         } else if (normalizedHeader.includes('status') || normalizedHeader.includes('situacao') || normalizedHeader.includes('resolucao')) {
           obj.status = value;
+        } else if ((normalizedHeader.includes('observacao') || normalizedHeader.includes('detalhe') || normalizedHeader.includes('obs')) && normalizedHeader.includes('cnr')) {
+          obj.observacaoCNR = value;
         } else if (normalizedHeader.includes('observacao') || normalizedHeader.includes('detalhe')) {
           obj.observacao = value;
         } else if (normalizedHeader.includes('orgao') || normalizedHeader.includes('uf') || normalizedHeader.includes('emissor') || normalizedHeader.includes('ead')) {
@@ -84,7 +86,7 @@ export const formatSheetData = (rawData) => {
           obj.procedentesBKO = value;
         } else if (normalizedHeader.includes('mascara')) {
           obj.usouMascara = value;
-        } else if (normalizedHeader.includes('autorizado')) {
+        } else if (normalizedHeader.includes('autorizado') || normalizedHeader.includes('autorizou') || normalizedHeader.includes('autorizacao') || normalizedHeader.includes('autorizador')) {
           obj.autorizadoPor = value;
         } else if (normalizedHeader.includes('sla') || normalizedHeader.includes('prazo')) {
           obj.sla = value;
