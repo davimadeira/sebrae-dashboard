@@ -62,6 +62,19 @@ export function getWeekFromDate(dateStr) {
   return `Semana ${weekNumber} (${String(startDay).padStart(2, '0')}/${month} a ${String(endDay).padStart(2, '0')}/${month})`;
 }
 
+export function getWeekSortValue(weekLabel) {
+  const label = String(weekLabel || '');
+  const weekMatch = label.match(/Semana\s+(\d+)/i);
+  const monthMatch = label.match(/\(\d{2}\/(\d{2})/);
+
+  const weekNumber = weekMatch ? parseInt(weekMatch[1], 10) : 0;
+  const month = monthMatch ? parseInt(monthMatch[1], 10) : 0;
+
+  if (!month || !weekNumber) return Number.MAX_SAFE_INTEGER;
+
+  return month * 10 + weekNumber;
+}
+
 export function getMonthYear(dateStr) {
   const date = parseDateValue(dateStr);
   if (!date) return null;

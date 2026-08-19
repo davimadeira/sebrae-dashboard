@@ -4,7 +4,7 @@ import { WidthProvider, Responsive } from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { fetchSheetData, formatSheetData } from './api/sheets';
-import { getMonthYear, getWeekFromDate } from './utils/dateHelpers';
+import { getMonthYear, getWeekFromDate, getWeekSortValue } from './utils/dateHelpers';
 import sebraeLogo from './logo-sebrae.png';
 import KPICards from './components/KPICards';
 import WeeklyChart from './components/WeeklyChart';
@@ -303,7 +303,7 @@ function App({ user, onLogout }) {
       if (item.abertopor) abertopor.add(item.abertopor);
     });
     return {
-      meses: Array.from(meses).sort(), semanas: Array.from(semanas).sort(), 
+      meses: Array.from(meses).sort(), semanas: Array.from(semanas).sort((a, b) => getWeekSortValue(a) - getWeekSortValue(b)),
       dias: Array.from(dias).sort(), assuntos: Array.from(assuntos).sort(), abertopor: Array.from(abertopor).sort()
     };
   }, [data]);
@@ -407,11 +407,7 @@ function App({ user, onLogout }) {
       if (!weeksMap[week]) weeksMap[week] = { semana: week, volumetria: 0, concluidos: 0, pendentes: 0 };
       weeksMap[week].concluidos += 1;
     });
-    return Object.values(weeksMap).sort((a, b) => {
-      const getMonth = (s) => { const m = s.match(/\((\d{2})\//); return m ? parseInt(m[1]) : 0; };
-      const getWeekNum = (s) => { const w = s.match(/Semana (\d+)/); return w ? parseInt(w[1]) : 0; };
-      return getMonth(a.semana) - getMonth(b.semana) || getWeekNum(a.semana) - getWeekNum(b.semana);
-    });
+    return Object.values(weeksMap).sort((a, b) => getWeekSortValue(a.semana) - getWeekSortValue(b.semana));
   }, [filteredByAbertura, filteredByFinalizacao]);
 
   const renderWidgetContent = (id) => {
