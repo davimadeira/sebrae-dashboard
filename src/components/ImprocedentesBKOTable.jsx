@@ -10,12 +10,19 @@ const normalizeAnswer = (value) => String(value || '')
   .toUpperCase();
 
 const isImprocedenteBKO = (item) => {
-  const answer = normalizeAnswer(item.improcedentesBKO);
-  return answer === 'SIM'
-    || answer === 'S'
-    || answer === 'TRUE'
-    || answer === '1'
-    || answer.includes('IMPROCEDENTE');
+  const improcedenteAnswer = normalizeAnswer(item.improcedentesBKO);
+  const procedenteAnswer = normalizeAnswer(item.procedentesBKO);
+
+  return improcedenteAnswer === 'SIM'
+    || improcedenteAnswer === 'S'
+    || improcedenteAnswer === 'TRUE'
+    || improcedenteAnswer === '1'
+    || improcedenteAnswer.includes('IMPROCEDENTE')
+    || procedenteAnswer === 'NAO'
+    || procedenteAnswer === 'N'
+    || procedenteAnswer === 'FALSE'
+    || procedenteAnswer === '0'
+    || procedenteAnswer.includes('IMPROCEDENTE');
 };
 
 const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
