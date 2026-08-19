@@ -76,12 +76,16 @@ export const formatSheetData = (rawData) => {
           obj.status = value;
         } else if ((normalizedHeader.includes('observacao') || normalizedHeader.includes('detalhe') || normalizedHeader.includes('obs')) && normalizedHeader.includes('cnr')) {
           obj.observacaoCNR = value;
+        } else if ((normalizedHeader.includes('observacao') || normalizedHeader.includes('detalhe') || normalizedHeader.includes('obs')) && normalizedHeader.includes('estado')) {
+          obj.observacaoEstado = value;
         } else if (normalizedHeader.includes('observacao') || normalizedHeader.includes('detalhe')) {
           obj.observacao = value;
         } else if (normalizedHeader.includes('orgao') || normalizedHeader.includes('uf') || normalizedHeader.includes('emissor') || normalizedHeader.includes('ead')) {
           obj.orgaoEmissor = value;
         } else if (normalizedHeader === 'procedentes' || (normalizedHeader.includes('procedentes') && !normalizedHeader.includes('retorno'))) {
           obj.procedentesCNR = value;
+        } else if (normalizedHeader.includes('retorno improcedente do estado') || normalizedHeader.includes('retorno improcedente')) {
+          obj.improcedentesBKO = value;
         } else if (normalizedHeader.includes('retorno procedente do estado') || normalizedHeader.includes('retorno procedente')) {
           obj.procedentesBKO = value;
         } else if (normalizedHeader.includes('mascara')) {
