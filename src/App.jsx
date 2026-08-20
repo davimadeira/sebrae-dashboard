@@ -293,20 +293,69 @@ function App({ user, onLogout }) {
 
   const filterOptions = useMemo(() => {
     if (!data || data.length === 0) return { meses: [], semanas: [], dias: [], assuntos: [], abertopor: [] };
-    const meses = new Set(), semanas = new Set(), dias = new Set(), assuntos = new Set(), abertopor = new Set();
-    data.forEach(item => {
-      const mesAbertura = getMonthYear(item.dataAbertura);
-      if (mesAbertura && mesAbertura !== 'NaN/NaN') meses.add(mesAbertura);
-      if (item.semana && !item.semana.includes('classificaÃ§Ã£o')) semanas.add(item.semana);
-      if (item.dataAbertura && item.dataAbertura !== '-') dias.add(item.dataAbertura);
-      if (item.assunto) assuntos.add(item.assunto);
-      if (item.abertopor) abertopor.add(item.abertopor);
-    });
-    return {
-      meses: Array.from(meses).sort(), semanas: Array.from(semanas).sort((a, b) => getWeekSortValue(a) - getWeekSortValue(b)),
-      dias: Array.from(dias).sort((a, b) => getDateSortValue(a) - getDateSortValue(b)), assuntos: Array.from(assuntos).sort(), abertopor: Array.from(abertopor).sort()
+
+    const filterKeys = ['meses', 'semanas', 'dias', 'assuntos', 'abertopor'];
+    const optionSets = {
+      meses: new Set(),
+      semanas: new Set(),
+      dias: new Set(),
+      assuntos: new Set(),
+      abertopor: new Set()
     };
-  }, [data]);
+
+    const getFilterValue = (item, key) => {
+      switch (key) {
+        case 'meses':
+          return getMonthYear(item.dataAbertura);
+        case 'semanas':
+          return item.semana || getWeekFromDate(item.dataAbertura);
+        case 'dias':
+          return item.dataAbertura;
+        case 'assuntos':
+          return item.assunto;
+        case 'abertopor':
+          return item.abertopor;
+        default:
+          return null;
+      }
+    };
+
+    const isValidFilterValue = (key, value) => {
+      if (!value || value === '-') return false;
+      if (key === 'meses' && value === 'NaN/NaN') return false;
+      if (key === 'semanas' && value.includes('classificaÃ§Ã£o')) return false;
+      return true;
+    };
+
+    const matchesSelectedFilters = (item, ignoredKey) => {
+      return filterKeys.every(key => {
+        if (key === ignoredKey) return true;
+
+        const selected = filters[key] || [];
+        if (selected.length === 0) return true;
+
+        const value = getFilterValue(item, key);
+        return selected.includes(value);
+      });
+    };
+
+    data.forEach(item => {
+      filterKeys.forEach(key => {
+        if (!matchesSelectedFilters(item, key)) return;
+
+        const value = getFilterValue(item, key);
+        if (isValidFilterValue(key, value)) optionSets[key].add(value);
+      });
+    });
+
+    return {
+      meses: Array.from(optionSets.meses).sort(),
+      semanas: Array.from(optionSets.semanas).sort((a, b) => getWeekSortValue(a) - getWeekSortValue(b)),
+      dias: Array.from(optionSets.dias).sort((a, b) => getDateSortValue(a) - getDateSortValue(b)),
+      assuntos: Array.from(optionSets.assuntos).sort(),
+      abertopor: Array.from(optionSets.abertopor).sort()
+    };
+  }, [data, filters]);
 
   const matchesPeriodFilters = (dateValue) => {
     if (!dateValue) return false;
