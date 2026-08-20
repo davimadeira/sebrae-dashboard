@@ -4,7 +4,7 @@ import { WidthProvider, Responsive } from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { fetchSheetData, formatSheetData } from './api/sheets';
-import { getMonthYear, getWeekFromDate, getWeekSortValue } from './utils/dateHelpers';
+import { getDateSortValue, getMonthYear, getWeekFromDate, getWeekSortValue } from './utils/dateHelpers';
 import sebraeLogo from './logo-sebrae.png';
 import KPICards from './components/KPICards';
 import WeeklyChart from './components/WeeklyChart';
@@ -304,7 +304,7 @@ function App({ user, onLogout }) {
     });
     return {
       meses: Array.from(meses).sort(), semanas: Array.from(semanas).sort((a, b) => getWeekSortValue(a) - getWeekSortValue(b)),
-      dias: Array.from(dias).sort(), assuntos: Array.from(assuntos).sort(), abertopor: Array.from(abertopor).sort()
+      dias: Array.from(dias).sort((a, b) => getDateSortValue(a) - getDateSortValue(b)), assuntos: Array.from(assuntos).sort(), abertopor: Array.from(abertopor).sort()
     };
   }, [data]);
 
