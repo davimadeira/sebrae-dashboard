@@ -5,6 +5,7 @@ import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { fetchSheetData, formatSheetData } from './api/sheets';
 import { getDateSortValue, getMonthYear, getWeekFromDate, getWeekSortValue } from './utils/dateHelpers';
+import { calculatePercentage } from './utils/numberHelpers';
 import sebraeLogo from './logo-sebrae.png';
 import KPICards from './components/KPICards';
 import WeeklyChart from './components/WeeklyChart';
@@ -384,9 +385,9 @@ function App({ user, onLogout }) {
     const concluidos = filteredByFinalizacao.length;
     const concluidosDoPeriodoDeAbertura = filteredByAbertura.filter(item => item.dataFinalizacao && matchesPeriodFilters(item.dataFinalizacao)).length;
     const concluidosIniciadosNoPeriodo = filteredByFinalizacao.filter(item => matchesPeriodFilters(item.dataAbertura)).length;
-    const percConcluidosIniciados = concluidos > 0 ? Math.round((concluidosIniciadosNoPeriodo / concluidos) * 100) : 0;
+    const percConcluidosIniciados = calculatePercentage(concluidosIniciadosNoPeriodo, concluidos);
     const pendentes = filteredByAbertura.filter(item => !item.dataFinalizacao || !matchesPeriodFilters(item.dataFinalizacao)).length;
-    const resolucao = total > 0 ? Math.round((concluidosDoPeriodoDeAbertura / total) * 100) : 0;
+    const resolucao = calculatePercentage(concluidosDoPeriodoDeAbertura, total);
 
     const normalizeAnswer = (value) => String(value || '')
       .trim()
@@ -407,7 +408,7 @@ function App({ user, onLogout }) {
     const cnrSim = cnrRows.filter(d => isYes(d.procedentesCNR)).length;
     const cnrNao = cnrRows.filter(d => isNo(d.procedentesCNR)).length;
     const cnrTotal = cnrRows.length;
-    const percCNR = cnrTotal > 0 ? Math.round((cnrSim / cnrTotal) * 100) : 0;
+    const percCNR = calculatePercentage(cnrSim, cnrTotal);
 
     // No BKO, uma célula vazia representa retorno procedente (SIM).
     const isBkoYes = (value) => !normalizeAnswer(value) || isYes(value);
@@ -415,7 +416,7 @@ function App({ user, onLogout }) {
     const bkoSim = bkoRows.filter(d => isBkoYes(d.procedentesBKO)).length;
     const bkoNao = bkoRows.filter(d => isNo(d.procedentesBKO)).length;
     const bkoTotal = bkoRows.length;
-    const percBKO = bkoTotal > 0 ? Math.round((bkoSim / bkoTotal) * 100) : 0;
+    const percBKO = calculatePercentage(bkoSim, bkoTotal);
 
     const chat = filteredByAbertura.filter(d => {
       const estrategia = (d.estrategia || '').trim().toUpperCase();

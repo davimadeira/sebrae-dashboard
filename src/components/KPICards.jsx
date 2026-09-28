@@ -7,6 +7,7 @@ import {
   ThumbsUp,
   ShieldCheck,
 } from 'lucide-react';
+import { formatPercentage } from '../utils/numberHelpers';
 
 const KPICards = ({ stats }) => {
   const cards = [
@@ -22,7 +23,7 @@ const KPICards = ({ stats }) => {
       value: stats.concluidos,
       icon: CheckCircle,
       color: 'bg-emerald-500',
-      description: `${stats.concluidosIniciadosNoPeriodo || 0} iniciados no período (${stats.percConcluidosIniciados || 0}%)`,
+      description: `${stats.concluidosIniciadosNoPeriodo || 0} iniciados no período (${formatPercentage(stats.percConcluidosIniciados)}%)`,
     },
     {
       title: 'Pendentes',
@@ -33,7 +34,7 @@ const KPICards = ({ stats }) => {
     },
     {
       title: '% Resolução',
-      value: `${stats.resolucao}%`,
+      value: `${formatPercentage(stats.resolucao)}%`,
       icon: Percent,
       color: 'bg-violet-500',
       description: 'Taxa de conclusão',
@@ -85,15 +86,15 @@ const KPICards = ({ stats }) => {
               {stats.cnrSim || 0}
             </p>
             <p className="text-[11px] text-blue-100/90 mt-1.5 leading-tight">
-              {stats.percCNR || 0}% de {stats.cnrTotal || 0} com dados
+              {formatPercentage(stats.percCNR)}% de {stats.cnrTotal || 0} com dados
             </p>
           </div>
           <div className="relative flex-shrink-0">
             <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
               <ThumbsUp className="w-6 h-6 text-white" />
             </div>
-            <div className="absolute -top-1 -right-1 bg-white text-blue-700 text-[10px] font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
-              {stats.percCNR || 0}%
+            <div className="absolute -top-1 -right-2 bg-white text-blue-700 text-[10px] font-bold rounded-full min-w-[42px] h-6 px-1 flex items-center justify-center shadow-lg">
+              {formatPercentage(stats.percCNR)}%
             </div>
           </div>
         </div>
@@ -122,15 +123,15 @@ const KPICards = ({ stats }) => {
               {stats.bkoSim || 0}
             </p>
             <p className="text-[11px] text-emerald-100/90 mt-1.5 leading-tight">
-              {stats.percBKO || 0}% de {stats.bkoTotal || 0} com dados
+              {formatPercentage(stats.percBKO)}% de {stats.bkoTotal || 0} com dados
             </p>
           </div>
           <div className="relative flex-shrink-0">
             <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
               <ShieldCheck className="w-6 h-6 text-white" />
             </div>
-            <div className="absolute -top-1 -right-1 bg-white text-emerald-700 text-[10px] font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
-              {stats.percBKO || 0}%
+            <div className="absolute -top-1 -right-2 bg-white text-emerald-700 text-[10px] font-bold rounded-full min-w-[42px] h-6 px-1 flex items-center justify-center shadow-lg">
+              {formatPercentage(stats.percBKO)}%
             </div>
           </div>
         </div>
