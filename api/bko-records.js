@@ -12,7 +12,20 @@ export const createHandler = (authorize = requireBko, getToken = getSheetsAccess
     const token = await getToken();
     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
     const schemaResponse = await request(`${base}${encodeURIComponent('Preenchimento!1:1')}`, { headers });
-    if (!schemaResponse.ok) throw Object.assign(new Error('Não foi possível acessar a planilha. Verifique a permissão da conta de serviço.'), { statusCode: 503 });
+    if (!schemaResponse.ok) {
+      const detail = await schemaResponse.json().catch(() => ({}));
+      const reason = detail.error?.details?.find(item => item.reason)?.reason || '';
+      console.error('bko_sheet_access_failed', { status: schemaResponse.status, reason, message: detail.error?.message });
+      const account = process.env.GCP_SERVICE_ACCOUNT_EMAIL || 'a conta de serviço configurada';
+      const message = reason === 'SERVICE_DISABLED'
+        ? 'A API Google Sheets está desativada no projeto Google Cloud da conta de serviço. Ative-a para continuar.'
+        : reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT'
+          ? 'A conexão Google não tem o escopo necessário para acessar planilhas.'
+          : schemaResponse.status === 403 || schemaResponse.status === 404
+            ? `Compartilhe a planilha do BKO com ${account} como Editor. Depois, abra este formulário novamente.`
+            : 'Não foi possível acessar a planilha. Tente novamente em instantes.';
+      throw Object.assign(new Error(message), { statusCode: 503 });
+    }
     const schema = (await schemaResponse.json()).values?.[0];
     if (!schema?.length || !schema[0]) throw Object.assign(new Error('A planilha precisa ter cabeçalhos válidos.'), { statusCode: 409 });
     if (req.method === 'GET') return res.status(200).json({ headers: schema });
