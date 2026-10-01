@@ -38,12 +38,12 @@ export const createHandler = (authorize = requireBko, getToken = getSheetsAccess
     if (values.some((v, i) => !schema[i] && v)) return res.status(400).json({ error: 'Uma coluna sem título não pode receber dados.' });
     // RAW mantém protocolos, zeros iniciais e textos como digitados, sem executar fórmulas.
     const response = await request(`${base}${encodeURIComponent('Preenchimento')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
-      method: 'POST', headers, body: JSON.stringify({ majorDimension: 'ROWS', values: [values.map(v => v.trim())] }),
+      method: 'POST', headers, body: JSON.stringify({ majorDimension: 'ROWS', values: [values.map((v, i) => schema[i] === 'Status Ticket' ? null : v.trim())] }),
     });
     if (!response.ok) return res.status(503).json({ error: 'Não foi possível salvar. Verifique a planilha antes de tentar novamente.' });
     const result = await response.json();
     console.info('bko_record_created', { uid: user.uid, createdAt: new Date().toISOString(), range: result.updates?.updatedRange });
-    return res.status(201).json({ ok: true });
+    return res.status(201).json({ ok: true, range: result.updates?.updatedRange });
   } catch (error) {
     return res.status(error.statusCode || 503).json({ error: error.statusCode ? error.message : 'Não foi possível confirmar a operação. Verifique a planilha antes de tentar novamente.' });
   }
