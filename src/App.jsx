@@ -27,6 +27,7 @@ import PasswordModal from './components/PasswordModal';
 import EditModeIndicator from './components/EditModeIndicator';
 import AdminPanel from './components/AdminPanel';
 import AccountModal from './components/AccountModal';
+import BkoRecordModal from './components/BkoRecordModal';
 import { 
   AlertCircle, 
   RefreshCw, 
@@ -133,12 +134,15 @@ function App({ user, onLogout }) {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isBko, setIsBko] = useState(false);
+  const [showBkoForm, setShowBkoForm] = useState(false);
 
   useEffect(() => {
     let active = true;
     if (!user) return undefined;
     const isBootstrapAdmin = BOOTSTRAP_ADMIN_EMAILS.includes(user.email?.toLowerCase());
-    user.getIdTokenResult().then(result => {
+    user.getIdTokenResult(true).then(result => {
+      if (active) setIsBko(result.claims.bko === true);
       if (active) setIsAdmin(isBootstrapAdmin || Boolean(result.claims.admin));
     }).catch(() => active && setIsAdmin(isBootstrapAdmin));
     return () => { active = false; };
@@ -525,6 +529,7 @@ function App({ user, onLogout }) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <EditModeIndicator isEditMode={isEditMode} onExit={exitEditMode} />
       <PasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} onSuccess={handlePasswordSuccess} />
+      {isBko && showBkoForm && <BkoRecordModal user={user} onClose={() => setShowBkoForm(false)} onSaved={loadData} />}
       <AccountModal isOpen={showAccountModal} onClose={() => setShowAccountModal(false)} user={user} />
       {showAdminPanel && <AdminPanel user={user} onClose={() => setShowAdminPanel(false)} />}
 
@@ -536,6 +541,7 @@ function App({ user, onLogout }) {
             <img src={sebraeLogo} alt="SEBRAE" className="h-12 w-auto object-contain" />
           </motion.div>
           <div className="flex flex-wrap items-center gap-2">
+            {isBko && <button onClick={() => setShowBkoForm(true)} className="rounded-lg bg-sebrae-blue px-3 py-1.5 text-sm text-white">Adicionar registro</button>}
             {!isEditMode && (
               <button onClick={openEditMode} className="flex items-center gap-1.5 px-3 py-1.5 bg-sebrae-blue text-white rounded-lg hover:bg-sebrae-blue/80 transition-colors text-xs sm:text-sm">
                 <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Editar</span>

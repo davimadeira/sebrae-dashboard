@@ -1,7 +1,7 @@
 import { allowedDomain, requireAdmin } from '../_firebaseAdmin.js';
 
 const strongPassword = value => typeof value === 'string' && value.length >= 8 && /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
-const userDto = user => ({ uid: user.uid, email: user.email, displayName: user.displayName || '', disabled: user.disabled, admin: Boolean(user.customClaims?.admin), createdAt: user.metadata.creationTime });
+const userDto = user => ({ uid: user.uid, email: user.email, displayName: user.displayName || '', disabled: user.disabled, admin: Boolean(user.customClaims?.admin), bko: user.customClaims?.bko === true, createdAt: user.metadata.creationTime });
 const errorResponse = (res, error) => res.status(error.statusCode || 500).json({ error: error.message || 'Não foi possível concluir a operação.' });
 
 const validateEmail = email => {
@@ -39,6 +39,12 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido.' });
 
     const { action, uid, email, displayName, password, disabled, admin, users } = req.body || {};
+    if (action === 'setBko') {
+      if (typeof req.body.bko !== 'boolean') return res.status(400).json({ error: 'Perfil BKO inválido.' });
+      const existing = await adminAuth.getUser(uid);
+      await adminAuth.setCustomUserClaims(uid, { ...(existing.customClaims || {}), bko: req.body.bko });
+      return res.status(200).json({ ok: true });
+    }
     if (action === 'create') {
       const user = await createDashboardUser(adminAuth, { email, displayName, password });
       return res.status(201).json({ user: userDto(user) });

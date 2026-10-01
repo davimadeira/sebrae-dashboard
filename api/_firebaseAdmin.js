@@ -26,6 +26,7 @@ const getExternalAccountClient = config => {
   const audience = `//iam.googleapis.com/projects/${config.GCP_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${config.GCP_WORKLOAD_IDENTITY_POOL_ID}/providers/${config.GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID}`;
   externalAccountClient = ExternalAccountClient.fromJSON({
     type: 'external_account',
+    scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets'],
     audience,
     subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
     token_url: 'https://sts.googleapis.com/v1/token',
@@ -82,3 +83,23 @@ export const requireAdmin = async req => {
 };
 
 export const allowedDomain = () => (process.env.ALLOWED_EMAIL_DOMAIN || 'sollobrasil.com.br').trim().replace(/^@/, '').toLowerCase();
+
+export const requireBko = async req => {
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+  if (!token) throw Object.assign(new Error('Entre novamente para continuar.'), { statusCode: 401 });
+  const auth = getAdminAuth();
+  let decoded;
+  try { decoded = await auth.verifyIdToken(token, true); }
+  catch { throw Object.assign(new Error('Sessão inválida. Entre novamente.'), { statusCode: 401 }); }
+  const record = await auth.getUser(decoded.uid);
+  if (record.disabled || record.customClaims?.bko !== true) {
+    throw Object.assign(new Error('Somente o perfil BKO pode adicionar registros.'), { statusCode: 403 });
+  }
+  return record;
+};
+
+export const getSheetsAccessToken = async () => {
+  const response = await getExternalAccountClient(getGcpConfiguration()).getAccessToken();
+  if (!response.token) throw Object.assign(new Error('Não foi possível acessar a planilha.'), { statusCode: 503 });
+  return response.token;
+};
