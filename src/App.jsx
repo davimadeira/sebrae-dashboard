@@ -27,7 +27,7 @@ import PasswordModal from './components/PasswordModal';
 import EditModeIndicator from './components/EditModeIndicator';
 import AdminPanel from './components/AdminPanel';
 import AccountModal from './components/AccountModal';
-import BkoRecordModal from './components/BkoRecordModal';
+import BkoTickets from './components/BkoTickets';
 import { 
   AlertCircle, 
   RefreshCw, 
@@ -579,10 +579,10 @@ function App({ user, onLogout }) {
 
         <nav aria-label="Menu BKO" className="bko-sidebar"><div className="bko-brand"><img src={sebraeLogo} alt="SEBRAE" /><span>GESTÃO DE ATENDIMENTOS</span></div><p className="bko-nav-caption">WORKSPACE · BKO</p>
           <button type="button" aria-current={!showBkoForm ? 'page' : undefined} onClick={() => setShowBkoForm(false)} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${!showBkoForm ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><BarChart3 size={19} />Indicadores</button>
-          {isBko && <button type="button" aria-current={showBkoForm ? 'page' : undefined} onClick={() => { setBkoVisited(true); setShowBkoForm(true); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${showBkoForm ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><Edit2 size={19} />Adicionar chamado</button>}
+          {isBko && <button type="button" aria-current={showBkoForm ? 'page' : undefined} onClick={() => { setBkoVisited(true); setShowBkoForm(true); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${showBkoForm ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><Edit2 size={19} />Chamados</button>}
         </nav>
         <div hidden={!showBkoForm || !isBko}>
-          {isBko && bkoVisited && <BkoRecordModal embedded user={user} onClose={() => setShowBkoForm(false)} onSaved={loadData} />}
+          {isBko && bkoVisited && <BkoTickets user={user} onSaved={loadData} />}
         </div>
         <div hidden={showBkoForm && isBko}>
         <div className="mb-6"><p className="bko-eyebrow">VISÃO GERAL</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Indicadores BKO</h1><p className="mt-2 text-sm text-slate-500">Acompanhe os chamados, resultados e desempenho da operação.</p></div>

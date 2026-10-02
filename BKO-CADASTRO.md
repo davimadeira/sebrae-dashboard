@@ -21,3 +21,11 @@ Validação local: `node --test tests/bko-records.test.js` e build do Vite. Refe
 
 O menu separa Indicadores e Adicionar chamado (somente BKO). O formulário mantém o preenchimento ao alternar abas e organiza todas as colunas em três seções. Datas usam seletor de calendário. As opções são carregadas das validações de Preenchimento!A2200:V2200 e das referências à aba LISTA; atualizar essa linha de referência se o modelo da planilha mudar. Listas estritas também são validadas no servidor. Status Ticket é exibido automaticamente e não é escrito, preservando a fórmula MAP da planilha.
 
+
+## Central de chamados e edição
+
+A aba Chamados permite a qualquer perfil BKO buscar, filtrar, cadastrar e editar qualquer ticket, conforme autorização do responsável. A listagem é paginada em 30 registros, com busca por protocolo, origem, assunto e responsáveis. Edições carregam a linha atual e enviam somente as células modificadas em values:batchUpdate com RAW. Protocolo, Status Ticket e células contendo fórmulas ficam bloqueados. Valores antigos fora das listas são preservados quando não alterados.
+
+Uma versão dos valores e fórmulas é comparada antes da gravação; diferenças retornam 409 e exigem reabrir o chamado. Essa conferência não é uma transação: alterações simultâneas diretamente na planilha no intervalo entre a leitura e a escrita ainda podem competir. Não há repetição automática. O log registra UID, linha, índices das colunas e horário, sem o conteúdo alterado.
+
+Validação: 13 testes locais, compilação e fluxo de edição no navegador com dados simulados. Nenhum ticket real foi modificado como teste.

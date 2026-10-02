@@ -1,13 +1,14 @@
 const requireBko = async req => (await import('./_firebaseAdmin.js')).requireBko(req);
 const getSheetsAccessToken = async () => (await import('./_firebaseAdmin.js')).getSheetsAccessToken();
 import { getBkoFields } from './_bkoFields.js';
+import { tickets } from './_bkoTickets.js';
 
 const sheetId = '1sq5V2qrF91laGglRf6CByHOl5w6SnlVcTyGxNBZ63nw';
 const base = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/`;
 
 export const createHandler = (authorize = requireBko, getToken = getSheetsAccessToken, request = fetch, fieldsLoader = getBkoFields) => async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'Método não permitido.' });
+  if (!['GET', 'POST', 'PATCH'].includes(req.method)) return res.status(405).json({ error: 'Método não permitido.' });
   try {
     const user = await authorize(req);
     const token = await getToken();
@@ -29,6 +30,7 @@ export const createHandler = (authorize = requireBko, getToken = getSheetsAccess
     }
     const schema = (await schemaResponse.json()).values?.[0];
     if (!schema?.length || !schema[0]) throw Object.assign(new Error('A planilha precisa ter cabeçalhos válidos.'), { statusCode: 409 });
+    if (req.method === 'PATCH' || (req.method === 'GET' && ['tickets', 'ticket'].includes(req.query?.mode))) return await tickets(req, res, { base, headers, schema, request, user });
     const fields = await fieldsLoader(base, headers, schema, request);
     if (req.method === 'GET') return res.status(200).json({ headers: schema, fields });
     const { columns, values } = req.body || {};
