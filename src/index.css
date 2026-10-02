@@ -190,3 +190,39 @@ table tbody td {
 .layout-editing .react-grid-item.resizing {
   z-index: 30;
 }
+
+/* Workspace BKO */
+.bko-shell { background: #f4f7fb; color: #17243b; }
+.bko-workspace { max-width: 1560px; padding-left: 280px; padding-right: 32px; }
+.bko-sidebar { position: fixed; inset: 0 auto 0 0; width: 244px; z-index: 35; display: flex; flex-direction: column; gap: 8px; padding: 32px 18px; background: #0b2447; color: #e7eef9; border-right: 1px solid #19385e; }
+.bko-brand { padding: 4px 14px 34px; }
+.bko-brand img { width: 112px; filter: brightness(0) invert(1); }
+.bko-brand span { display: block; margin-top: 18px; font-size: 9px; font-weight: 600; letter-spacing: .12em; opacity: .65; }
+.bko-nav-caption { font-size: 10px; letter-spacing: .14em; color: #7f9bbf; margin: 8px 14px 12px; }
+.bko-sidebar button { display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px; color: #bed0e7; border: 1px solid transparent; }
+.bko-sidebar button[aria-current=page] { background: #17457a; color: white; border-color: #28588f; box-shadow: inset 3px 0 #51bcff; }
+.bko-sidebar button:hover { background: #16395f; }
+.bko-eyebrow { color: #2271b7; font-size: 10px; font-weight: 800; letter-spacing: .18em; }
+.bko-panel { border: 1px solid #e1e7ef; border-radius: 16px; background: white; box-shadow: 0 3px 14px #10274b04; overflow: hidden; }
+.bko-access-badge { border: 1px solid #bee5d8; background: #eaf8f1; color: #187653; border-radius: 30px; padding: 7px 14px; font-size: 11px; font-weight: 700; }
+.bko-step { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 11px; background: #eaf2fc; color: #286aaf; font-size: 12px; font-weight: 800; }
+.bko-input { width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid #dbe3ed; border-radius: 9px; background: #fff; color: #24354d; font-size: 13px; transition: border-color .15s, box-shadow .15s; }
+.bko-input:focus { outline: none; border-color: #3b82c4; box-shadow: 0 0 0 3px #3b82c414; }
+.bko-input::placeholder { color: #97a3b5; }
+.bko-calculated { background: #f2f6fb; color: #55708e; }
+.bko-savebar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 24px; padding: 20px 0; }
+.bko-primary,.bko-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 9px; padding: 11px 18px; font-size: 13px; font-weight: 650; }
+.bko-primary { background: #1664ab; color: white; box-shadow: 0 3px 8px #1664ab20; }
+.bko-primary:hover { background: #104e87; }
+.bko-secondary { border: 1px solid #dbe3ed; color: #52647c; background: white; }
+.bko-primary:disabled,.bko-secondary:disabled { opacity: .55; cursor: wait; }
+.dark .bko-panel { background: #172438; border-color: #2a3b52; }
+.dark .bko-shell { color: #e4eaf2; background: #0d1726; }
+.dark .bko-input,.dark .bko-secondary { background: #111e31; color: #e0e9f5; border-color: #34455d; color-scheme: dark; }
+.dark .bko-calculated { background: #20314a; }
+.dark .bko-eyebrow { color: #75b5ed; }
+@media (max-width: 1000px) { .bko-workspace { padding-left: 24px; } .bko-sidebar { position: static; width: auto; flex-direction: row; flex-wrap: wrap; border-radius: 13px; margin-bottom: 24px; padding: 8px; } .bko-brand,.bko-nav-caption { display: none; } }
+@media (max-width: 600px) { .bko-workspace { padding-left: 16px; } .bko-savebar { align-items: flex-start; flex-direction: column; } .bko-savebar>div { width: 100%; } .bko-savebar button { flex: 1; } }
+
+.bko-sidebar .bko-brand span { color: #bed0e7; }
+.bko-sidebar button { color: #bed0e7; }

@@ -1,10 +1,11 @@
 const requireBko = async req => (await import('./_firebaseAdmin.js')).requireBko(req);
 const getSheetsAccessToken = async () => (await import('./_firebaseAdmin.js')).getSheetsAccessToken();
+import { getBkoFields } from './_bkoFields.js';
 
 const sheetId = '1sq5V2qrF91laGglRf6CByHOl5w6SnlVcTyGxNBZ63nw';
 const base = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/`;
 
-export const createHandler = (authorize = requireBko, getToken = getSheetsAccessToken, request = fetch) => async (req, res) => {
+export const createHandler = (authorize = requireBko, getToken = getSheetsAccessToken, request = fetch, fieldsLoader = getBkoFields) => async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'Método não permitido.' });
   try {
@@ -28,7 +29,8 @@ export const createHandler = (authorize = requireBko, getToken = getSheetsAccess
     }
     const schema = (await schemaResponse.json()).values?.[0];
     if (!schema?.length || !schema[0]) throw Object.assign(new Error('A planilha precisa ter cabeçalhos válidos.'), { statusCode: 409 });
-    if (req.method === 'GET') return res.status(200).json({ headers: schema });
+    const fields = await fieldsLoader(base, headers, schema, request);
+    if (req.method === 'GET') return res.status(200).json({ headers: schema, fields });
     const { columns, values } = req.body || {};
     if (JSON.stringify(columns) !== JSON.stringify(schema)) return res.status(409).json({ error: 'As colunas da planilha mudaram. Feche e abra o formulário novamente.' });
     if (!Array.isArray(values) || values.length !== schema.length || values.some(v => typeof v !== 'string' || v.length > 10000)) {
@@ -36,6 +38,15 @@ export const createHandler = (authorize = requireBko, getToken = getSheetsAccess
     }
     if (!values[0].trim() || values[0].trim() === '#VALOR!') return res.status(400).json({ error: `Preencha ${schema[0]}.` });
     if (values.some((v, i) => !schema[i] && v)) return res.status(400).json({ error: 'Uma coluna sem título não pode receber dados.' });
+    for (const [i, field] of fields.entries()) {
+      const value = values[i].trim();
+      if (value && field.strict && field.options.length && !field.options.includes(value)) return res.status(400).json({ error: `Selecione uma opção válida em ${field.name}.` });
+      if (value && field.type === 'date') {
+        const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+        const date = match && new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+        if (!match || date.getFullYear() !== Number(match[3]) || date.getMonth() !== Number(match[2]) - 1 || date.getDate() !== Number(match[1])) return res.status(400).json({ error: `Informe uma data válida em ${field.name}.` });
+      }
+    }
     // RAW mantém protocolos, zeros iniciais e textos como digitados, sem executar fórmulas.
     const response = await request(`${base}${encodeURIComponent('Preenchimento')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
       method: 'POST', headers, body: JSON.stringify({ majorDimension: 'ROWS', values: [values.map((v, i) => schema[i] === 'Status Ticket' ? null : v.trim())] }),

@@ -16,3 +16,8 @@ O servidor valida a sessão, consulta o perfil atual no Firebase e bloqueia usu�
 Não há repetição automática de gravações. Se ocorrer falha de rede durante o salvamento, conferir a planilha antes de tentar novamente, pois a resposta pode ter sido perdida depois da inclusão.
 
 Validação local: `node --test tests/bko-records.test.js` e build do Vite. Referência da integração: https://developers.google.com/workspace/sheets/api/reference/rest/v4/spreadsheets.values/append
+
+## Menu e campos
+
+O menu separa Indicadores e Adicionar chamado (somente BKO). O formulário mantém o preenchimento ao alternar abas e organiza todas as colunas em três seções. Datas usam seletor de calendário. As opções são carregadas das validações de Preenchimento!A2200:V2200 e das referências à aba LISTA; atualizar essa linha de referência se o modelo da planilha mudar. Listas estritas também são validadas no servidor. Status Ticket é exibido automaticamente e não é escrito, preservando a fórmula MAP da planilha.
+

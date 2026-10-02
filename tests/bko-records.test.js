@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHandler } from '../api/bko-records.js';
+import { createHandler as handlerFactory } from '../api/bko-records.js';
 
+const createHandler = (auth, token, request) => handlerFactory(auth, token, request, async () => []);
 const columns = ['Protocolo', 'Observações'];
 const response = () => ({ setHeader() {}, status(code) { this.code = code; return this; }, json(body) { this.body = body; return this; } });
 const setup = () => {

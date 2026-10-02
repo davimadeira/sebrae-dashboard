@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { WidthProvider, Responsive } from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
@@ -136,6 +136,7 @@ function App({ user, onLogout }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBko, setIsBko] = useState(false);
   const [showBkoForm, setShowBkoForm] = useState(false);
+  const [bkoVisited, setBkoVisited] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -504,7 +505,7 @@ function App({ user, onLogout }) {
     );
   };
 
-  if (loading) {
+  if (loading && !data.length) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sebrae-orange mx-auto"></div><p className="mt-4 text-gray-600 dark:text-gray-400">Carregando dados...</p></div>
@@ -512,7 +513,7 @@ function App({ user, onLogout }) {
     );
   }
 
-  if (error) {
+  if (error && !data.length) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 max-w-md text-center">
@@ -526,14 +527,13 @@ function App({ user, onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="bko-shell min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <EditModeIndicator isEditMode={isEditMode} onExit={exitEditMode} />
       <PasswordModal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} onSuccess={handlePasswordSuccess} />
-      {isBko && showBkoForm && <BkoRecordModal user={user} onClose={() => setShowBkoForm(false)} onSaved={loadData} />}
       <AccountModal isOpen={showAccountModal} onClose={() => setShowAccountModal(false)} user={user} />
       {showAdminPanel && <AdminPanel user={user} onClose={() => setShowAdminPanel(false)} />}
 
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
+      <div className="bko-workspace mx-auto py-6 sm:py-8">
         
         {/* Header */}
         <header className="flex flex-wrap justify-between items-center gap-3 mb-6">
@@ -541,7 +541,6 @@ function App({ user, onLogout }) {
             <img src={sebraeLogo} alt="SEBRAE" className="h-12 w-auto object-contain" />
           </motion.div>
           <div className="flex flex-wrap items-center gap-2">
-            {isBko && <button onClick={() => setShowBkoForm(true)} className="rounded-lg bg-sebrae-blue px-3 py-1.5 text-sm text-white">Adicionar registro</button>}
             {!isEditMode && (
               <button onClick={openEditMode} className="flex items-center gap-1.5 px-3 py-1.5 bg-sebrae-blue text-white rounded-lg hover:bg-sebrae-blue/80 transition-colors text-xs sm:text-sm">
                 <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /><span className="hidden sm:inline">Editar</span>
@@ -578,6 +577,15 @@ function App({ user, onLogout }) {
           </div>
         </header>
 
+        <nav aria-label="Menu BKO" className="bko-sidebar"><div className="bko-brand"><img src={sebraeLogo} alt="SEBRAE" /><span>GESTÃO DE ATENDIMENTOS</span></div><p className="bko-nav-caption">WORKSPACE · BKO</p>
+          <button type="button" aria-current={!showBkoForm ? 'page' : undefined} onClick={() => setShowBkoForm(false)} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${!showBkoForm ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><BarChart3 size={19} />Indicadores</button>
+          {isBko && <button type="button" aria-current={showBkoForm ? 'page' : undefined} onClick={() => { setBkoVisited(true); setShowBkoForm(true); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${showBkoForm ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><Edit2 size={19} />Adicionar chamado</button>}
+        </nav>
+        <div hidden={!showBkoForm || !isBko}>
+          {isBko && bkoVisited && <BkoRecordModal embedded user={user} onClose={() => setShowBkoForm(false)} onSaved={loadData} />}
+        </div>
+        <div hidden={showBkoForm && isBko}>
+        <div className="mb-6"><p className="bko-eyebrow">VISÃO GERAL</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Indicadores BKO</h1><p className="mt-2 text-sm text-slate-500">Acompanhe os chamados, resultados e desempenho da operação.</p></div>
         {/* Filters */}
         <Filters filters={filters} setFilters={setFilters} options={filterOptions} toggleFilter={toggleFilter} clearFilters={clearFilters} />
 
@@ -617,6 +625,7 @@ function App({ user, onLogout }) {
           )}
         </div>
 
+        </div>
         {/* Footer */}
         <footer className="mt-8 text-center text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
           {data.length} chamados carregados | {stats.cnrSim || 0} procedentes CNR ({stats.percCNR || 0}%) | Ãšltima atualizaÃ§Ã£o: {lastUpdate?.toLocaleString('pt-BR')}
