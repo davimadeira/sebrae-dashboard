@@ -29,6 +29,7 @@ import AdminPanel from './components/AdminPanel';
 import AccountModal from './components/AccountModal';
 import BkoTickets from './components/BkoTickets';
 import CallbackPanel from './components/CallbackPanel';
+import TratativaPanel, { TRATATIVA_TITLE } from './components/TratativaPanel';
 import { 
   AlertCircle, 
   RefreshCw, 
@@ -139,6 +140,7 @@ function App({ user, onLogout }) {
   const [showBkoForm, setShowBkoForm] = useState(false);
   const [bkoVisited, setBkoVisited] = useState(false);
   const [showCallback, setShowCallback] = useState(false);
+  const [showTratativa, setShowTratativa] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -580,15 +582,17 @@ function App({ user, onLogout }) {
         </header>
 
         <nav aria-label="Menu BKO" className="bko-sidebar"><div className="bko-brand"><img src={sebraeLogo} alt="SEBRAE" /><span>GESTÃO DE ATENDIMENTOS</span></div><p className="bko-nav-caption">WORKSPACE · BKO</p>
-          <button type="button" aria-current={!showBkoForm && !showCallback ? 'page' : undefined} onClick={() => { setShowBkoForm(false); setShowCallback(false); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${!showBkoForm && !showCallback ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><BarChart3 size={19} />Indicadores</button>
-          {isBko && <button type="button" aria-current={showBkoForm ? 'page' : undefined} onClick={() => { setBkoVisited(true); setShowBkoForm(true); setShowCallback(false); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${showBkoForm ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><Edit2 size={19} />Chamados</button>}
-          <button type="button" aria-current={showCallback ? 'page' : undefined} onClick={() => { setShowCallback(true); setShowBkoForm(false); }} className="rounded-lg text-sm font-semibold"><BarChart3 size={19} />Callback</button>
+          <button type="button" aria-current={!showBkoForm && !showCallback && !showTratativa ? 'page' : undefined} onClick={() => { setShowBkoForm(false); setShowCallback(false); setShowTratativa(false); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${!showBkoForm && !showCallback && !showTratativa ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><BarChart3 size={19} />Indicadores</button>
+          {isBko && <button type="button" aria-current={showBkoForm ? 'page' : undefined} onClick={() => { setBkoVisited(true); setShowBkoForm(true); setShowCallback(false); setShowTratativa(false); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${showBkoForm ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><Edit2 size={19} />Chamados</button>}
+          <button type="button" aria-current={showCallback ? 'page' : undefined} onClick={() => { setShowCallback(true); setShowTratativa(false); setShowBkoForm(false); }} className="rounded-lg text-sm font-semibold"><BarChart3 size={19} />Callback</button>
+          {isBko && <button type="button" aria-current={showTratativa ? 'page' : undefined} onClick={() => { setShowTratativa(true); setShowCallback(false); setShowBkoForm(false); }} className="rounded-lg text-sm font-semibold"><Edit2 size={19}/>{TRATATIVA_TITLE}</button>}
         </nav>
+        {showTratativa && isBko && <TratativaPanel user={user} />}
         {showCallback && <CallbackPanel />}
         <div hidden={!showBkoForm || !isBko}>
           {isBko && bkoVisited && <BkoTickets user={user} onSaved={loadData} />}
         </div>
-        <div hidden={showCallback || (showBkoForm && isBko)}>
+        <div hidden={showCallback || (showTratativa && isBko) || (showBkoForm && isBko)}>
         <div className="mb-6"><p className="bko-eyebrow">VISÃO GERAL</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Indicadores BKO</h1><p className="mt-2 text-sm text-slate-500">Acompanhe os chamados, resultados e desempenho da operação.</p></div>
         {/* Filters */}
         <Filters filters={filters} setFilters={setFilters} options={filterOptions} toggleFilter={toggleFilter} clearFilters={clearFilters} />
@@ -631,7 +635,7 @@ function App({ user, onLogout }) {
 
         </div>
         {/* Footer */}
-        <footer hidden={showCallback} className="mt-8 text-center text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
+        <footer hidden={showCallback || showTratativa} className="mt-8 text-center text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
           {data.length} chamados carregados | {stats.cnrSim || 0} procedentes CNR ({stats.percCNR || 0}%) | Ãšltima atualizaÃ§Ã£o: {lastUpdate?.toLocaleString('pt-BR')}
         </footer>
 
