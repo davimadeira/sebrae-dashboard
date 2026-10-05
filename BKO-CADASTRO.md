@@ -29,3 +29,10 @@ A aba Chamados permite a qualquer perfil BKO buscar, filtrar, cadastrar e editar
 Uma versão dos valores e fórmulas é comparada antes da gravação; diferenças retornam 409 e exigem reabrir o chamado. Essa conferência não é uma transação: alterações simultâneas diretamente na planilha no intervalo entre a leitura e a escrita ainda podem competir. Não há repetição automática. O log registra UID, linha, índices das colunas e horário, sem o conteúdo alterado.
 
 Validação: 13 testes locais, compilação e fluxo de edição no navegador com dados simulados. Nenhum ticket real foi modificado como teste.
+## Painel analítico de Tratativa
+
+A Visão geral apresenta status, tempo em aberto, prioridades, tentativas e taxas por contato, resultados Foco por canal, distribuição e participações dos operadores, N2 e descrições/termos recorrentes. Critérios de classificação ficam visíveis e podem ser ajustados na sessão. Valores não reconhecidos não entram no denominador das taxas de sucesso. Apenas status de abertura reconhecidos entram na fila. Dias são corridos, em São Paulo. Não há cálculo de tempo até resolução sem data de conclusão.
+
+O CSV de interações é lido localmente no navegador (até 20 MB); ID Genesys cruza com ID de conversa por igualdade após normalizar caixa/espaços. Direção Saída ou Entrada/Saída marca callback. Repetições de ID são agrupadas. A importação não altera nem envia a base e não atualiza a aba Callback. Os filtros analíticos não alteram a lista Todos os registros. Regras e CSV não persistem ao sair da aba/recarregar.
+
+Validação: 10 testes de análise e acesso; importador conferido no CSV fornecido (371 IDs, 11 callbacks); renderização estática em base vazia e com exemplo sintético. A prévia visual no navegador ficou indisponível por falha da ferramenta local. Nenhum dado fictício é publicado.
