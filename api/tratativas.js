@@ -5,8 +5,8 @@ export const createHandler = (auth = authorize, token = accessToken, request = f
   if (req.method !== 'GET') return res.status(405).json({ error: 'Método não permitido.' });
   try {
     await auth(req);
-    const response = await request('https://sheets.googleapis.com/v4/spreadsheets/1sq5V2qrF91laGglRf6CByHOl5w6SnlVcTyGxNBZ63nw/values/Tratativa?valueRenderOption=FORMATTED_VALUE', { headers: { Authorization: `Bearer ${await token()}` } });
-    if (!response.ok) return res.status(503).json({ error: 'Não foi possível carregar a aba Tratativa. Tente novamente.' });
+    const response = await request('https://sheets.googleapis.com/v4/spreadsheets/1L77GtPqjvdchT7CxMBW-zoT1ZGrP7S9u5zJPzPKb-zU/values/Tratativa?valueRenderOption=FORMATTED_VALUE', { headers: { Authorization: `Bearer ${await token()}` } });
+    if (!response.ok) return res.status(503).json({ error: [403, 404].includes(response.status) ? `Não foi possível acessar a planilha NPS. Compartilhe a nova planilha com ${process.env.GCP_SERVICE_ACCOUNT_EMAIL || 'a conta de serviço do dashboard'} como Leitor e confira a aba Tratativa.` : 'Não foi possível carregar a aba Tratativa. Tente novamente.' });
     const { values = [] } = await response.json();
     const headers = values[0] || [];
     if (!headers.length) return res.status(409).json({ error: 'A aba Tratativa precisa ter cabeçalhos.' });

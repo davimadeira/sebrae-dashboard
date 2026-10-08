@@ -36,3 +36,7 @@ A Visão geral apresenta status, tempo em aberto, prioridades, tentativas e taxa
 O CSV de interações é lido localmente no navegador (até 20 MB); ID Genesys cruza com ID de conversa por igualdade após normalizar caixa/espaços. Direção Saída ou Entrada/Saída marca callback. Repetições de ID são agrupadas. A importação não altera nem envia a base e não atualiza a aba Callback. Os filtros analíticos não alteram a lista Todos os registros. Regras e CSV não persistem ao sair da aba/recarregar.
 
 Validação: 10 testes de análise e acesso; importador conferido no CSV fornecido (371 IDs, 11 callbacks); renderização estática em base vazia e com exemplo sintético. A prévia visual no navegador ficou indisponível por falha da ferramenta local. Nenhum dado fictício é publicado.
+
+## Origem da Tratativa
+
+Desde 08/10/2026, a consulta de Tratativa usa a planilha NPS (ID 1L77GtPqjvdchT7CxMBW-zoT1ZGrP7S9u5zJPzPKb-zU), aba Tratativa (gid 113388530). Compartilhar com GCP_SERVICE_ACCOUNT_EMAIL como Leitor. A conexão de BKO/Preenchimento permanece na planilha anterior. A conferência autenticada da nova origem está pendente de sessão/acesso.
