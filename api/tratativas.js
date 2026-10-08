@@ -48,6 +48,7 @@ export const createHandler = (auth = authorize, token = accessToken, request = f
       if (!Number.isInteger(index) || index < 0 || index >= columns.length || seen.has(index) || typeof value !== 'string' || value.length > 10000) throw sheetError('Alteração inválida.', 400);
       seen.add(index);
       const field = fields[index];
+      if (field.optionsError && value.trim() !== (existing?.values[index] || '').trim()) throw sheetError(`A lista de ${field.name} está indisponível. Atualize após corrigir a origem na planilha.`, 400);
       if (field.type === 'calculated' || existing?.calculated[index]) { if (value.trim() && !existing || existing && value !== existing.values[index]) throw sheetError(`${field.name} é preenchido automaticamente.`, 400); continue; }
       if (!columns[index] && value.trim()) throw sheetError('Uma coluna sem título não pode receber dados.', 400);
       if (value.trim() && field.strict && !field.options.includes(value.trim()) && value !== existing?.values[index]) throw sheetError(`Selecione uma opção válida em ${field.name}.`, 400);
