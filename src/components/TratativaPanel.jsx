@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Search, RefreshCw, ClipboardList, Plus } from 'lucide-react';
 import TratativaAnalytics from './TratativaAnalytics';
 import NpsRecordForm from './NpsRecordForm';
-import { analyticsIndexes } from '../utils/npsSchema';
+import { analyticsIndexes, normalizedHeader } from '../utils/npsSchema';
 export const TRATATIVA_TITLE = 'NPS';
 export default function TratativaPanel({ user }) {
   const [view, setView] = useState('overview');
@@ -19,7 +19,7 @@ export default function TratativaPanel({ user }) {
     return () => { active = false; };
   }, [user, reload]);
   const indexes = useMemo(() => analyticsIndexes(data.headers), [data.headers]);
-  const records = useMemo(() => data.records.map(record => ({ ...record, source: record, values: indexes.map(i => i >= 0 ? record.values[i] : '') })), [data.records, indexes]);
+  const records = useMemo(() => data.records.map(record => ({ ...record, source: record, deadline: record.values[data.headers.findIndex(h => ['prazofinal', 'prazo'].includes(normalizedHeader(h)))] || '', values: indexes.map(i => i >= 0 ? record.values[i] : '') })), [data.records, data.headers, indexes]);
   const filtered = useMemo(() => records.filter(({ values, source }) => (!status || values[9] === status) && (!query || source.values.some(value => value.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))))), [records, query, status]);
   const pages = Math.max(1, Math.ceil(filtered.length / 25));
   const closeEditor = () => { setEditor(null); setView('records'); if (refreshPending) { setReload(n => n + 1); setRefreshPending(false); } };

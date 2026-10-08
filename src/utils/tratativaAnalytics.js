@@ -1,5 +1,5 @@
 export const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-export const defaults = { open: 'aberto;aberta;pendente;em andamento;em análise;em tratativa', closed: 'concluído;concluída;finalizado;finalizada;encerrado;encerrada', success: 'sim;sucesso;com sucesso', failure: 'não;sem sucesso;insucesso', n2: 'sim', age: 7 };
+export const defaults = { open: 'em aberto;aberto;aberta;pendente;em andamento;em análise;em tratativa', closed: 'concluído;concluída;finalizado;finalizada;encerrado;encerrada', success: 'sim;sucesso;com sucesso', failure: 'não;sem sucesso;insucesso', n2: 'sim', age: 7 };
 const includes = (list, value) => String(list || '').split(';').map(normalize).filter(Boolean).includes(normalize(value));
 export function day(value) {
  const text=String(value||'').trim();
