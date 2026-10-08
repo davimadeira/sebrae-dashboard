@@ -141,6 +141,7 @@ function App({ user, onLogout }) {
   const [bkoVisited, setBkoVisited] = useState(false);
   const [showCallback, setShowCallback] = useState(false);
   const [showTratativa, setShowTratativa] = useState(false);
+  const [npsVisited, setNpsVisited] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -585,9 +586,9 @@ function App({ user, onLogout }) {
           <button type="button" aria-current={!showBkoForm && !showCallback && !showTratativa ? 'page' : undefined} onClick={() => { setShowBkoForm(false); setShowCallback(false); setShowTratativa(false); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${!showBkoForm && !showCallback && !showTratativa ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><BarChart3 size={19} />Indicadores</button>
           {isBko && <button type="button" aria-current={showBkoForm ? 'page' : undefined} onClick={() => { setBkoVisited(true); setShowBkoForm(true); setShowCallback(false); setShowTratativa(false); }} className={`rounded-lg px-5 py-3 text-sm font-semibold transition-colors ${showBkoForm ? 'bg-sebrae-blue text-white' : 'text-gray-600 dark:text-gray-300'}`}><Edit2 size={19} />Chamados</button>}
           <button type="button" aria-current={showCallback ? 'page' : undefined} onClick={() => { setShowCallback(true); setShowTratativa(false); setShowBkoForm(false); }} className="rounded-lg text-sm font-semibold"><BarChart3 size={19} />Callback</button>
-          {isBko && <button type="button" aria-current={showTratativa ? 'page' : undefined} onClick={() => { setShowTratativa(true); setShowCallback(false); setShowBkoForm(false); }} className="rounded-lg text-sm font-semibold"><Edit2 size={19}/>{TRATATIVA_TITLE}</button>}
+          {isBko && <button type="button" aria-current={showTratativa ? 'page' : undefined} onClick={() => { setNpsVisited(true); setShowTratativa(true); setShowCallback(false); setShowBkoForm(false); }} className="rounded-lg text-sm font-semibold"><Edit2 size={19}/>{TRATATIVA_TITLE}</button>}
         </nav>
-        {showTratativa && isBko && <TratativaPanel user={user} />}
+        {npsVisited && isBko && <div hidden={!showTratativa}><TratativaPanel user={user} /></div>}
         {showCallback && <CallbackPanel />}
         <div hidden={!showBkoForm || !isBko}>
           {isBko && bkoVisited && <BkoTickets user={user} onSaved={loadData} />}

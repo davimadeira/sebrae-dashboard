@@ -2,6 +2,7 @@ const requireBko = async req => (await import('./_firebaseAdmin.js')).requireBko
 const getSheetsAccessToken = async () => (await import('./_firebaseAdmin.js')).getSheetsAccessToken();
 import { getBkoFields } from './_bkoFields.js';
 import { tickets } from './_bkoTickets.js';
+import { insertAfterRecords } from './_sheetRows.js';
 
 const sheetId = '1sq5V2qrF91laGglRf6CByHOl5w6SnlVcTyGxNBZ63nw';
 const base = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/`;
@@ -49,14 +50,9 @@ export const createHandler = (authorize = requireBko, getToken = getSheetsAccess
         if (!match || date.getFullYear() !== Number(match[3]) || date.getMonth() !== Number(match[2]) - 1 || date.getDate() !== Number(match[1])) return res.status(400).json({ error: `Informe uma data válida em ${field.name}.` });
       }
     }
-    // RAW mantém protocolos, zeros iniciais e textos como digitados, sem executar fórmulas.
-    const response = await request(`${base}${encodeURIComponent('Preenchimento')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
-      method: 'POST', headers, body: JSON.stringify({ majorDimension: 'ROWS', values: [values.map((v, i) => schema[i] === 'Status Ticket' ? null : v.trim())] }),
-    });
-    if (!response.ok) return res.status(503).json({ error: 'Não foi possível salvar. Verifique a planilha antes de tentar novamente.' });
-    const result = await response.json();
-    console.info('bko_record_created', { uid: user.uid, createdAt: new Date().toISOString(), range: result.updates?.updatedRange });
-    return res.status(201).json({ ok: true, range: result.updates?.updatedRange });
+    const range = await insertAfterRecords({ root: base.replace(/\/values\/$/, ''), tab: 'Preenchimento', schema, values, headers, request, calculated: schema.flatMap((name, i) => name === 'Status Ticket' ? [i] : []) });
+    console.info('bko_record_created', { uid: user.uid, createdAt: new Date().toISOString(), range });
+    return res.status(201).json({ ok: true, range });
   } catch (error) {
     return res.status(error.statusCode || 503).json({ error: error.statusCode ? error.message : 'Não foi possível confirmar a operação. Verifique a planilha antes de tentar novamente.' });
   }

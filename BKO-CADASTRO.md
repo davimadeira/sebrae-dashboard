@@ -40,3 +40,13 @@ Validação: 10 testes de análise e acesso; importador conferido no CSV forneci
 ## Origem da Tratativa
 
 Desde 08/10/2026, a consulta de Tratativa usa a planilha NPS (ID 1L77GtPqjvdchT7CxMBW-zoT1ZGrP7S9u5zJPzPKb-zU), aba Tratativa (gid 113388530). Compartilhar com GCP_SERVICE_ACCOUNT_EMAIL como Leitor. A conexão de BKO/Preenchimento permanece na planilha anterior. A conferência autenticada da nova origem está pendente de sessão/acesso.
+
+## Cadastro NPS — 08/10/2026
+
+A origem agora é a aba NPS, gid 113388530, da planilha 1L77GtPqjvdchT7CxMBW-zoT1ZGrP7S9u5zJPzPKb-zU. A conta dashboard-admin@sebrae-fc1b9.iam.gserviceaccount.com recebeu Editor com confirmação do responsável. Navegação NPS, cadastro e edição de qualquer registro restritos a BKO no servidor. Campos seguem cabeçalhos, listas de validação e valores observados. Indicadores mapeiam nomes e ocorrências dos cabeçalhos, inclusive os quatro operadores repetidos; a nova coluna Prazo Final não desloca a análise.
+
+Somente NPS: data de início sem entrada manual, gerada ao completar nome, CPF e ID Genesys, na criação ou edição; mantém a data existente. Usa valor numérico de data/hora e formato dd/mm/yyyy hh:mm:ss, no fuso America/Sao_Paulo. A gravação via API não executa onEdit, portanto a regra é aplicada no servidor. Outras datas e datas do BKO continuam com sua configuração anterior.
+
+As inclusões BKO/NPS leem valores e fórmulas para localizar a última linha com conteúdo real. Inserção física e preenchimento pertencem ao mesmo batch atômico, sem sobrescrever a linha de outro envio simultâneo. Linhas só com fórmulas não prolongam a tabela. Copia formatação, validação e fórmulas comuns de linha; não escreve Status Ticket nem replica âncoras de fórmulas matriciais. Registros antigos já afastados continuam onde estão; não há reorganização retroativa.
+
+Edição NPS confere versão, preserva células calculadas e escreve apenas mudanças. Como no BKO, edições manuais concorrentes entre leitura e escrita não têm isolamento transacional. Não existe reenvio automático após erro incerto. Nenhum dado fictício é inserido na planilha para teste.
