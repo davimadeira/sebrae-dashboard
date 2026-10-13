@@ -98,6 +98,18 @@ export const requireBko = async req => {
   return record;
 };
 
+export const requireUser = async req => {
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+  if (!token) throw Object.assign(new Error('Entre novamente para continuar.'), { statusCode: 401 });
+  const auth = getAdminAuth();
+  let decoded;
+  try { decoded = await auth.verifyIdToken(token, true); }
+  catch { throw Object.assign(new Error('Sessão inválida. Entre novamente.'), { statusCode: 401 }); }
+  const record = await auth.getUser(decoded.uid);
+  if (record.disabled) throw Object.assign(new Error('Esta conta está desativada.'), { statusCode: 403 });
+  return record;
+};
+
 export const getSheetsAccessToken = async () => {
   const response = await getExternalAccountClient(getGcpConfiguration()).getAccessToken();
   if (!response.token) throw Object.assign(new Error('Não foi possível acessar a planilha.'), { statusCode: 503 });

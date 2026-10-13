@@ -589,7 +589,7 @@ function App({ user, onLogout }) {
           {isBko && <button type="button" aria-current={showTratativa ? 'page' : undefined} onClick={() => { setNpsVisited(true); setShowTratativa(true); setShowCallback(false); setShowBkoForm(false); }} className="rounded-lg text-sm font-semibold"><Edit2 size={19}/>{TRATATIVA_TITLE}</button>}
         </nav>
         {npsVisited && isBko && <div hidden={!showTratativa}><TratativaPanel user={user} /></div>}
-        {showCallback && <CallbackPanel />}
+        {showCallback && <CallbackPanel user={user} />}
         <div hidden={!showBkoForm || !isBko}>
           {isBko && bkoVisited && <BkoTickets user={user} onSaved={loadData} />}
         </div>
