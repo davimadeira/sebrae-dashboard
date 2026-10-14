@@ -505,3 +505,19 @@ table tbody td {
 
 .bko-workspace.callback-wide-workspace{padding-left:12px;padding-right:12px}
 .ticket-toolbar{flex-wrap:wrap}
+.bko-workspace.callback-wide-workspace{padding-top:8px;padding-bottom:12px;padding-left:8px;padding-right:8px}
+.callback-wide-workspace>header{margin-bottom:8px;gap:8px}
+.callback-wide-workspace>header img{max-height:32px}
+.callback-wide-workspace .bko-sidebar{padding:4px;margin-bottom:8px;border-radius:8px}
+.callback-wide-workspace .bko-sidebar button{padding-top:8px;padding-bottom:8px}
+.callback-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:4px}
+.callback-panel-heading h1{font-size:18px;font-weight:750;letter-spacing:-.025em;color:#204e6e;margin:0}
+.callback-panel-heading .bi-date-filter{display:flex;align-items:center;gap:10px;width:380px;margin:0}
+.callback-panel-heading .bi-date-label{white-space:nowrap;margin:0}
+.callback-panel-heading .bi-date-trigger{min-height:34px;padding:7px 10px}
+.callback-compact .callback-toolbar{margin:4px 0 6px}
+.callback-compact .callback-table-scroll{height:calc(100dvh - 190px);min-height:300px;max-height:none}
+.callback-compact .callback-table-legend{padding:6px 10px}
+.callback-compact .callback-summary-cards{margin:12px 0}
+.dark .callback-panel-heading h1{color:#b3ddf2}
+@media(max-width:700px){.callback-panel-heading{flex-wrap:wrap;gap:6px}.callback-panel-heading .bi-date-filter{width:100%;max-width:380px}.callback-compact .callback-table-scroll{height:calc(100dvh - 260px);min-height:300px}}
