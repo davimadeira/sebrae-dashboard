@@ -11,7 +11,7 @@ export default function DateRangePicker({value={start:'',end:''},onChange,label=
  const close=()=>{setOpen(false);trigger.current?.focus();};
  useEffect(()=>{
   if(!open)return;
-  const place=()=>{const r=trigger.current.getBoundingClientRect();const width=Math.min(560,window.innerWidth-24);setPosition({left:Math.max(12,Math.min(r.left,window.innerWidth-width-12)),top:Math.max(12,Math.min(r.bottom+8,window.innerHeight-520)),width,maxHeight:window.innerHeight-24});};
+  const place=()=>{const r=trigger.current.getBoundingClientRect();const width=Math.min(560,window.innerWidth-24);const top=Math.max(12,Math.min(r.bottom+8,window.innerHeight-580));setPosition({left:Math.max(12,Math.min(r.left,window.innerWidth-width-12)),top,width,maxHeight:window.innerHeight-top-12});};
   const outside=e=>{if(!panel.current?.contains(e.target)&&!trigger.current?.contains(e.target))setOpen(false);};
   const escape=e=>{if(e.key==='Escape')close();};
   place();panel.current?.focus();document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape);window.addEventListener('resize',place);window.addEventListener('scroll',place,true);
