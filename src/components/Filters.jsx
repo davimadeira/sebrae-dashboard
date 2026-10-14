@@ -1,3 +1,4 @@
+import DateRangePicker from './DateRangePicker';
 import { useState } from 'react';
 import { 
   ChevronDown, 
@@ -10,7 +11,7 @@ import {
   Users 
 } from 'lucide-react';
 
-const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilter = () => {}, clearFilters = () => {}, dateOnly = false }) => {
+const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilter = () => {}, clearFilters = () => {}, dateOnly = false, dateRange = {}, onDateRangeChange = () => {} }) => {
   const [openFilters, setOpenFilters] = useState({
     meses: false,
     semanas: false,
@@ -34,7 +35,7 @@ const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilt
 
   // Total usado para exibir o botao de limpar todos.
   const totalActive = 
-    (filters?.meses?.length || 0) + 
+    (dateRange.start || dateRange.end ? 1 : 0) + (filters?.meses?.length || 0) +
     (filters?.semanas?.length || 0) + 
     (filters?.dias?.length || 0) + 
     (filters?.assuntos?.length || 0) + 
@@ -105,9 +106,7 @@ const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilt
           <span>Filtros:</span>
         </span>
         
-        {renderMultiSelect('meses', meses, 'Meses', Calendar)}
-        {renderMultiSelect('semanas', semanas, 'Semanas', CalendarDays)}
-        {renderMultiSelect('dias', dias, 'Dias', CalendarClock)}
+        <DateRangePicker value={dateRange} onChange={onDateRangeChange} label="Período dos indicadores"/>
         {!dateOnly && renderMultiSelect('assuntos', assuntos, 'Assuntos', FolderOpen)}
         {!dateOnly && renderMultiSelect('abertopor', abertopor, 'Abertos Por', Users)}
 

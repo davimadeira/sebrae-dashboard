@@ -1,5 +1,6 @@
+import DateRangePicker from './DateRangePicker';
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, BarChart3, CalendarDays, Loader2, RefreshCw } from 'lucide-react';
+import { AlertCircle, BarChart3, Loader2, RefreshCw } from 'lucide-react';
 import { callbackDateLabels, filterCallbackDateRange, summarizeCallbackRows } from '../utils/callbackView';
 
 const number = value => typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
@@ -47,27 +48,19 @@ export default function CallbackPanel({ user }) {
     return () => { active = false; controller.abort(); };
   }, [user, reload]);
 
-  const invalidRange = Boolean(filters.start && filters.end && filters.start > filters.end);
   const rows = useMemo(() => filterCallbackDateRange(data?.rows || [], filters), [data, filters]);
   const total = useMemo(() => summarizeCallbackRows(rows), [rows]);
 
   return <section className="callback-page callback-compact">
     <header className="callback-hero">
       <div><p className="bko-eyebrow">ACOMPANHAMENTO DIÁRIO</p><h1>Callback</h1><p>Chamadas e retornos por data da ligação original.</p></div>
-      <div className="callback-mini-stats" aria-label="Resumo do período filtrado">
+      </header>
+      <div className="callback-summary-cards" aria-label="Resumo do período filtrado">
         <div><span>Elegíveis</span><strong>{loading || !data ? '—' : number(total.eligible)}</strong></div>
         <div><span>Realizados</span><strong>{loading || !data ? '—' : number(total.performed)}</strong></div>
         <div><span>Com sucesso</span><strong>{loading || !data ? '—' : percent(total.successRate)}</strong></div>
       </div>
-    </header>
-    <div className="callback-date-range" role="group" aria-label="Filtrar por intervalo de datas">
-      <div className="callback-date-range-title"><CalendarDays size={17}/><span>Data da chamada<small>Entre</small></span></div>
-      <label>Data inicial<input type="date" lang="pt-BR" value={filters.start} max={filters.end || undefined} aria-invalid={invalidRange} aria-describedby={invalidRange ? 'callback-date-error' : undefined} onChange={event => setFilters(previous => ({ ...previous, start: event.target.value }))}/></label>
-      <span className="callback-date-separator">até</span>
-      <label>Data final<input type="date" lang="pt-BR" value={filters.end} min={filters.start || undefined} aria-invalid={invalidRange} aria-describedby={invalidRange ? 'callback-date-error' : undefined} onChange={event => setFilters(previous => ({ ...previous, end: event.target.value }))}/></label>
-      <button type="button" onClick={() => setFilters(emptyFilters())} disabled={!filters.start && !filters.end}>Todo o período</button>
-      {invalidRange && <p id="callback-date-error" role="alert">A data final deve ser igual ou posterior à data inicial.</p>}
-    </div>
+    <DateRangePicker value={filters} onChange={setFilters} label="Data da chamada"/>
     <div className="callback-toolbar">
       <span><BarChart3 size={15}/>{data ? 'Planilha conectada' : 'Fonte: planilha de Callback'}{data && ' · ' + rows.length + ' dias exibidos'}</span>
       <div>{data && <small>Atualizado às {new Date(data.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</small>}
@@ -104,7 +97,7 @@ export default function CallbackPanel({ user }) {
       <li>Sem saída identificada é apresentado como não realizado na base disponível; arquivos ausentes e retornos fora dos critérios podem afetar essa classificação. Entrada/Saída não é somada automaticamente aos resultados principais.</li>
       <li>As taxas são: realizados ÷ elegíveis; sucesso ÷ realizados; sem sucesso ÷ realizados. Tentativas adicionais não multiplicam o número de chamadas originais.</li>
       <li>Potencial de registros aguarda definição. Registro no Foco depende de fonte separada; sua taxa exige potencial validado e o mesmo período nas duas bases.</li>
-      <li>Cada linha usa a data da chamada original. O intervalo inclui a data inicial e a data final e atualiza a tabela, os totais e os percentuais. Sem uma das datas, esse limite fica aberto. Todo o período limpa a seleção. Use Atualizar depois de atualizar a planilha.</li>
+      <li>Cada linha usa a data da chamada original. O intervalo inclui a data inicial e a data final e atualiza a tabela, os totais e os percentuais. Escolha os dois dias e clique em Aplicar. Todo o período remove o recorte após aplicar. Use Atualizar depois de atualizar a planilha.</li>
     </ul><p className="callback-note"><a href="https://help.genesys.cloud/faqs/what-is-the-difference-between-the-answered-and-handle-metrics/" target="_blank" rel="noreferrer" className="underline">Referência: Genesys — diferença entre Answered e Handle</a></p></details>
   </section>;
 }

@@ -1,3 +1,4 @@
+import { inDateRange, normalizedDate } from '../src/utils/dateRange.js';
 import { createHash } from 'node:crypto';
 import { getBkoFields } from './_bkoFields.js';
 
@@ -24,10 +25,12 @@ export async function tickets(req, res, { base, headers, schema, request, user }
   if (req.method === 'GET' && req.query?.mode === 'tickets') {
     const query = String(req.query.q || '').trim().toLocaleLowerCase('pt-BR');
     const status = String(req.query.status || '');
+    const range={start:String(req.query.start||''),end:String(req.query.end||'')};
+    if ([range.start,range.end].some(value=>value&&normalizedDate(value)!==value) || (range.start&&range.end&&range.start>range.end)) fail('Período inválido.');
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const rows = await read(`Preenchimento!A2:${end}`);
     const records = rows.map((values, i) => ({ row: i + 2, values: normalize(values) })).filter(record => record.values[0] && !record.values[0].startsWith('#'));
-    const filtered = records.filter(({ values }) => (!status || values[12] === status) && (!query || [0, 4, 5, 7, 16].some(i => values[i]?.toLocaleLowerCase('pt-BR').includes(query)))).reverse();
+    const filtered = records.filter(({ values }) => inDateRange(values[2],range) && (!status || values[12] === status) && (!query || [0, 4, 5, 7, 16].some(i => values[i]?.toLocaleLowerCase('pt-BR').includes(query)))).reverse();
     return res.status(200).json({ records: filtered.slice((page - 1) * 30, page * 30), total: filtered.length, page, pages: Math.max(1, Math.ceil(filtered.length / 30)) });
   }
   if (req.method === 'GET') {

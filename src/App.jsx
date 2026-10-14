@@ -1,3 +1,4 @@
+import { inDateRange } from './utils/dateRange';
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { WidthProvider, Responsive } from 'react-grid-layout/legacy';
@@ -154,6 +155,7 @@ function App({ user, onLogout }) {
     return () => { active = false; };
   }, [user]);
 
+  const [dateRange, setDateRange] = useState({start:'',end:''});
   const [filters, setFilters] = useState({
     meses: [], semanas: [], dias: [], assuntos: [], abertopor: []
   });
@@ -217,6 +219,7 @@ function App({ user, onLogout }) {
   };
 
   const clearFilters = () => {
+    setDateRange({start:'',end:''});
     setFilters({ meses: [], semanas: [], dias: [], assuntos: [], abertopor: [] });
   };
 
@@ -339,7 +342,7 @@ function App({ user, onLogout }) {
     };
 
     const matchesSelectedFilters = (item, ignoredKey) => {
-      return filterKeys.every(key => {
+      return inDateRange(item.dataAbertura, dateRange) && filterKeys.every(key => {
         if (key === ignoredKey) return true;
 
         const selected = filters[key] || [];
@@ -366,10 +369,10 @@ function App({ user, onLogout }) {
       assuntos: Array.from(optionSets.assuntos).sort(),
       abertopor: Array.from(optionSets.abertopor).sort()
     };
-  }, [data, filters]);
+  }, [data, filters, dateRange]);
 
   const matchesPeriodFilters = (dateValue) => {
-    if (!dateValue) return false;
+    if (!dateValue || !inDateRange(dateValue, dateRange)) return false;
     if (filters.meses.length > 0 && !filters.meses.includes(getMonthYear(dateValue))) return false;
     if (filters.dias.length > 0 && !filters.dias.includes(dateValue)) return false;
     if (filters.semanas.length > 0 && !filters.semanas.includes(getWeekFromDate(dateValue))) return false;
@@ -384,11 +387,11 @@ function App({ user, onLogout }) {
 
   const filteredByAbertura = useMemo(() => {
     return data.filter(item => matchesPeriodFilters(item.dataAbertura) && matchesDimensionFilters(item));
-  }, [data, filters]);
+  }, [data, filters, dateRange]);
 
   const filteredByFinalizacao = useMemo(() => {
     return data.filter(item => item.dataFinalizacao && matchesPeriodFilters(item.dataFinalizacao) && matchesDimensionFilters(item));
-  }, [data, filters]);
+  }, [data, filters, dateRange]);
 
   const stats = useMemo(() => {
     const total = filteredByAbertura.length;
@@ -452,7 +455,7 @@ function App({ user, onLogout }) {
       bkoTotal,
       percBKO,
     };
-  }, [filteredByAbertura, filteredByFinalizacao, filters]);
+  }, [filteredByAbertura, filteredByFinalizacao, filters, dateRange]);
 
   const weeklyDataForChart = useMemo(() => {
     const weeksMap = {};
@@ -538,7 +541,7 @@ function App({ user, onLogout }) {
       <AccountModal isOpen={showAccountModal} onClose={() => setShowAccountModal(false)} user={user} />
       {showAdminPanel && <AdminPanel user={user} onClose={() => setShowAdminPanel(false)} />}
 
-      <div className="bko-workspace mx-auto py-6 sm:py-8">
+      <div className={`bko-workspace mx-auto py-6 sm:py-8 ${showCallback ? 'callback-wide-workspace' : ''}`}>
         
         {/* Header */}
         <header className="flex flex-wrap justify-between items-center gap-3 mb-6">
@@ -596,7 +599,7 @@ function App({ user, onLogout }) {
         <div hidden={showCallback || (showTratativa && isBko) || (showBkoForm && isBko)}>
         <div className="mb-6"><p className="bko-eyebrow">VISÃO GERAL</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Indicadores BKO</h1><p className="mt-2 text-sm text-slate-500">Acompanhe os chamados, resultados e desempenho da operação.</p></div>
         {/* Filters */}
-        <Filters filters={filters} setFilters={setFilters} options={filterOptions} toggleFilter={toggleFilter} clearFilters={clearFilters} />
+        <Filters dateRange={dateRange} onDateRangeChange={setDateRange} filters={filters} setFilters={setFilters} options={filterOptions} toggleFilter={toggleFilter} clearFilters={clearFilters} />
 
         {/* Grid Dashboard */}
         <div className="mt-5">
