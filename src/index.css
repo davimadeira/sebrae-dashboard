@@ -372,6 +372,22 @@ table tbody td {
 .dark .callback-compact .callback-main-table tbody tr:hover td,.dark .callback-compact .callback-main-table tbody tr:hover th { background:#284452; }
 .dark .callback-compact .callback-main-table tfoot td,.dark .callback-compact .callback-main-table tfoot th { background:#254b65; color:#fff; }
 @media(max-width:700px) { .callback-compact .callback-hero { align-items:stretch; padding:14px; }.callback-mini-stats { justify-content:space-between; text-align:left; }.callback-toolbar { flex-wrap:wrap; }.callback-compact .callback-table-scroll { max-height:60vh; } }
+.callback-date-range { display:flex; align-items:center; flex-wrap:wrap; gap:12px; background:#fff; border:1px solid #dce7ed; border-radius:10px; padding:10px 14px; margin-bottom:10px; color:#345366; }
+.callback-date-range-title { display:flex; align-items:center; gap:8px; margin-right:8px; font-size:12px; font-weight:650; }
+.callback-date-range-title small { display:block; font-size:10px; font-weight:400; color:#788e9d; margin-top:2px; }
+.callback-date-range label { display:flex; flex-direction:column; gap:4px; font-size:10px; color:#607b8c; }
+.callback-date-range input { width:154px; padding:6px 9px; border:1px solid #c9d8e2; border-radius:4px; background:#fff; color:#243f52; font:inherit; font-size:12px; color-scheme:light; }
+.callback-date-range input:focus { outline:2px solid #73b2d3; outline-offset:1px; }
+.callback-date-range input[aria-invalid="true"] { border-color:#c53030; }
+.callback-date-separator { padding-top:16px; font-size:11px; color:#8499a7; }
+.callback-date-range button { margin-left:auto; border:0; background:transparent; color:#17658f; font-size:11px; font-weight:600; padding:7px 9px; cursor:pointer; }
+.callback-date-range button:disabled { color:#8b9da8; cursor:default; }
+.callback-date-range p { width:100%; font-size:11px; color:#c53030; margin:0; }
+.dark .callback-date-range { background:#122237; border-color:#2a4357; color:#d7e8f3; }
+.dark .callback-date-range label { color:#a7bfce; }
+.dark .callback-date-range input { background:#173146; border-color:#3d586c; color:#e4f0f7; color-scheme:dark; }
+.dark .callback-date-range button { color:#9bcde5; }
+@media(max-width:600px) { .callback-date-range { gap:8px; }.callback-date-range-title { width:100%; }.callback-date-range input { width:138px; }.callback-date-range button { margin-left:0; } }
 /* Tratativa analytics */
 .ta-view-tabs { display:flex; gap:24px; border-bottom:1px solid #dce4ed; margin-bottom:24px; }
 .ta-view-tabs button { padding:12px 0; font-size:13px; color:#738397; border-bottom:2px solid transparent; }

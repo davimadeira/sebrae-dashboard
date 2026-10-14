@@ -19,3 +19,9 @@ export function summarizeCallbackRows(rows) {
   return { ...total, answered: null, finished: null, potential: null, registered: null, registeredRate: null,
     performedRate: rate(total.performed, total.eligible), successRate: rate(total.success, total.performed), failedRate: rate(total.failed, total.performed) };
 }
+
+export function filterCallbackDateRange(rows, { start = '', end = '' } = {}) {
+  if (start && end && start > end) return [];
+  if (!start && !end) return rows;
+  return rows.filter(row => /^\d{4}-\d{2}-\d{2}$/.test(row.date) && (!start || row.date >= start) && (!end || row.date <= end));
+}
