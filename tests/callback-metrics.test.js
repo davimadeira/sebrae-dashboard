@@ -3,22 +3,22 @@ import assert from 'node:assert/strict';
 import { callbackMetrics } from '../api/_callbackMetrics.js';
 
 // Reordered headers exercise lookup rather than fixed column positions.
-const ih = ['Direção', 'Finalização', 'ID de conversa', 'Usuários', 'Tipo de mídia'];
+const ih = ['Direção', 'Total de conversas', 'ID de conversa', 'Usuários', 'Tipo de mídia'];
 const ch = ['Status do callback', 'ID da chamada original'];
-test('separa finalizadas de elegíveis, ignora mensagem e deduplica IDs', () => {
+test('exige conversa efetiva, separa mistos e mantém regras pendentes sem estimativas', () => {
   const metrics = callbackMetrics([ih,
-    ['Entrada', 'Resolvido', 'a', 'Ana', 'voz'],
-    ['Entrada', 'Resolvido', 'A', 'Bia', 'voz'],
-    ['Entrada', 'Queda', 'b', 'Ana', 'voz'],
-    ['Entrada', 'Abandono', 'c', '', 'voz'],
-    ['Saída', 'Resolvido', 'd', 'Ana', 'voz'],
-    ['Entrada/Saída', 'Resolvido', 'e', 'Ana', 'voz'],
-    ['Entrada', 'Resolvido', 'f', 'Ana', 'mensagem'],
+    ['Entrada', '00:01:00.000', 'a', 'Ana', 'voz'],
+    ['Entrada', '00:01:00.000', 'A', 'Bia', 'voz'],
+    ['Entrada', '00:00:00,001', 'b', 'Ana', 'voz'],
+    ['Entrada', '00:00:00', 'c', 'Ana', 'voz'],
+    ['Saída', '00:01:00', 'd', 'Ana', 'voz'],
+    ['Entrada/Saída', '00:01:00', 'e', 'Ana', 'voz'],
+    ['Entrada', '00:01:00', 'f', 'Ana', 'mensagem'],
   ], [ch, ['Sucesso', 'b'], ['SUCESSO', 'B'], ['Insucesso', 'g'], ['Sem saída identificada', 'c']]);
-  assert.deepEqual(metrics, { received: 3, answered: null, unique: 2, finished: 1,
+  assert.deepEqual(metrics, { received: 3, answered: null, unique: 2, finished: null,
     eligible: 3, performed: 2, success: 1, failed: 1, pending: 1,
     performedRate: 2/3, successRate: .5, failedRate: .5,
-    potential: 2, registered: null, registeredRate: null });
+    potential: null, registered: null, registeredRate: null, mixed: 1 });
 });
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
   const metrics = callbackMetrics([ih], [ch]);

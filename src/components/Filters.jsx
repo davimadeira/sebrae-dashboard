@@ -10,7 +10,7 @@ import {
   Users 
 } from 'lucide-react';
 
-const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilter = () => {}, clearFilters = () => {} }) => {
+const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilter = () => {}, clearFilters = () => {}, dateOnly = false }) => {
   const [openFilters, setOpenFilters] = useState({
     meses: false,
     semanas: false,
@@ -108,8 +108,8 @@ const Filters = ({ filters = {}, setFilters = () => {}, options = {}, toggleFilt
         {renderMultiSelect('meses', meses, 'Meses', Calendar)}
         {renderMultiSelect('semanas', semanas, 'Semanas', CalendarDays)}
         {renderMultiSelect('dias', dias, 'Dias', CalendarClock)}
-        {renderMultiSelect('assuntos', assuntos, 'Assuntos', FolderOpen)}
-        {renderMultiSelect('abertopor', abertopor, 'Abertos Por', Users)}
+        {!dateOnly && renderMultiSelect('assuntos', assuntos, 'Assuntos', FolderOpen)}
+        {!dateOnly && renderMultiSelect('abertopor', abertopor, 'Abertos Por', Users)}
 
         {totalActive > 0 && (
           <button
