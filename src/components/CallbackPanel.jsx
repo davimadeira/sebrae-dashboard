@@ -52,15 +52,10 @@ export default function CallbackPanel({ user }) {
   const total = useMemo(() => summarizeCallbackRows(rows), [rows]);
 
   return <section className="callback-page callback-compact">
-    <header className="callback-hero">
-      <div><p className="bko-eyebrow">ACOMPANHAMENTO DIÁRIO</p><h1>Callback</h1><p>Chamadas e retornos por data da ligação original.</p></div>
-      </header>
-      <div className="callback-summary-cards" aria-label="Resumo do período filtrado">
-        <div><span>Elegíveis</span><strong>{loading || !data ? '—' : number(total.eligible)}</strong></div>
-        <div><span>Realizados</span><strong>{loading || !data ? '—' : number(total.performed)}</strong></div>
-        <div><span>Com sucesso</span><strong>{loading || !data ? '—' : percent(total.successRate)}</strong></div>
-      </div>
-    <DateRangePicker value={filters} onChange={setFilters} label="Data da chamada"/>
+    <header className="callback-panel-heading">
+      <h1>Callback</h1>
+      <DateRangePicker value={filters} onChange={setFilters} label="Data da chamada"/>
+    </header>
     <div className="callback-toolbar">
       <span><BarChart3 size={15}/>{data ? 'Planilha conectada' : 'Fonte: planilha de Callback'}{data && ' · ' + rows.length + ' dias exibidos'}</span>
       <div>{data && <small>Atualizado às {new Date(data.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</small>}
@@ -84,6 +79,11 @@ export default function CallbackPanel({ user }) {
         </div>
         <div className="callback-table-legend"><span><i className="callback-dot received"/>Recebimento</span><span><i className="callback-dot callback"/>Callback</span><span><i className="callback-dot focus"/>Foco</span><p>{number(total.mixed)} interações Entrada/Saída separadas no período.</p></div>
       </section>
+      <div className="callback-summary-cards" aria-label="Resumo do período filtrado">
+        <div><span>Elegíveis</span><strong>{loading || !data ? '—' : number(total.eligible)}</strong></div>
+        <div><span>Realizados</span><strong>{loading || !data ? '—' : number(total.performed)}</strong></div>
+        <div><span>Com sucesso</span><strong>{loading || !data ? '—' : percent(total.successRate)}</strong></div>
+      </div>
       <div className="callback-notice"><AlertCircle size={15}/><p><strong>—</strong> indica definição ou fonte pendente. Sucesso significa conversa com o cliente, não comprova atendimento concluído. <a href="https://docs.google.com/spreadsheets/d/1Egx88GkeZ9ZHQrijClJEXIEDlQBy-ImuW_G92uR65R4/edit" target="_blank" rel="noreferrer" className="underline">Abrir planilha</a></p></div>
     </>}
     <details className="bko-panel callback-section"><summary>Como os indicadores são calculados</summary><ul>
