@@ -524,11 +524,16 @@ table tbody td {
 .callback-connection-dot{width:6px;height:6px;border-radius:50%;background:#94a3b8}.callback-connection-dot.is-connected{background:#20a881}
 .callback-heading-actions{display:flex;align-items:center;gap:10px}
 .callback-heading-actions .callback-refresh{min-height:34px;border-radius:7px;background:#edf5fc;border-color:#d7e6f3;color:#245779;padding:7px 12px}
-.callback-wide-workspace .bko-sidebar{background:transparent;border:0;border-bottom:1px solid #dce5ef;border-radius:0;box-shadow:none;padding:0 0 7px;gap:6px}
-.callback-wide-workspace .bko-sidebar button{color:#61758c;background:transparent;border:1px solid transparent;box-shadow:none;padding:8px 16px;font-size:12px}
-.callback-wide-workspace .bko-sidebar button:hover{background:#e9f1f8;color:#21577b}
-.callback-wide-workspace .bko-sidebar button[aria-current="page"]{background:#e6f2fb;border-color:#cee3f3;color:#12649a;box-shadow:none}
-.callback-wide-workspace .bko-sidebar button svg{width:16px;height:16px;color:inherit}
-.dark .callback-panel-heading{background:#172438;border-color:#35465e}.dark .callback-wide-workspace .bko-sidebar{border-color:#35465e}.dark .callback-wide-workspace .bko-sidebar button{color:#afc2d7}.dark .callback-wide-workspace .bko-sidebar button[aria-current="page"]{background:#243e58;color:#c2e4ff;border-color:#365775}.dark .callback-heading-actions .callback-refresh{background:#243e58;border-color:#365775;color:#c2e4ff}
+/* Shared horizontal navigation for every dashboard section. */
+.bko-workspace{padding-left:20px;padding-right:20px}
+.bko-workspace .bko-sidebar{position:static;width:auto;flex-direction:row;flex-wrap:wrap;margin-bottom:8px}
+.bko-workspace .bko-brand,.bko-workspace .bko-nav-caption{display:none}
+@media(max-width:600px){.bko-workspace{padding-left:16px;padding-right:16px}}
+.bko-workspace .bko-sidebar{background:transparent;border:0;border-bottom:1px solid #dce5ef;border-radius:0;box-shadow:none;padding:0 0 7px;gap:6px}
+.bko-workspace .bko-sidebar button{color:#61758c;background:transparent;border:1px solid transparent;box-shadow:none;padding:8px 16px;font-size:12px}
+.bko-workspace .bko-sidebar button:hover{background:#e9f1f8;color:#21577b}
+.bko-workspace .bko-sidebar button[aria-current="page"]{background:#e6f2fb;border-color:#cee3f3;color:#12649a;box-shadow:none}
+.bko-workspace .bko-sidebar button svg{width:16px;height:16px;color:inherit}
+.dark .callback-panel-heading{background:#172438;border-color:#35465e}.dark .bko-workspace .bko-sidebar{border-color:#35465e}.dark .bko-workspace .bko-sidebar button{color:#afc2d7}.dark .bko-workspace .bko-sidebar button[aria-current="page"]{background:#243e58;color:#c2e4ff;border-color:#365775}.dark .callback-heading-actions .callback-refresh{background:#243e58;border-color:#365775;color:#c2e4ff}
 @media(max-width:700px){.callback-heading-actions{width:100%;flex-wrap:wrap}.callback-heading-actions .bi-date-filter{flex:1;min-width:200px}.callback-heading-copy p{flex-wrap:wrap}.callback-panel-heading{padding:10px 12px}}
 @media(max-width:700px){.callback-panel-heading{flex-wrap:wrap;gap:6px}.callback-panel-heading .bi-date-filter{width:100%;max-width:380px}.callback-compact .callback-table-scroll{height:calc(100dvh - 260px);min-height:300px}}
