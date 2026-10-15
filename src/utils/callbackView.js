@@ -13,10 +13,10 @@ export function filterCallbackRows(rows, filters) {
 }
 
 export function summarizeCallbackRows(rows) {
-  const keys = ['received', 'unique', 'eligible', 'performed', 'success', 'failed', 'pending', 'mixed'];
+  const keys = ['received', 'unique', 'finished', 'eligible', 'performed', 'success', 'failed', 'pending', 'mixed'];
   const total = Object.fromEntries(keys.map(key => [key, rows.reduce((sum, row) => sum + row[key], 0)]));
   const rate = (value, denominator) => denominator ? value / denominator : null;
-  return { ...total, answered: null, finished: null, potential: null, registered: null, registeredRate: null,
+  return { ...total, answered: null, potential: null, registered: null, registeredRate: null,
     performedRate: rate(total.performed, total.eligible), successRate: rate(total.success, total.performed), failedRate: rate(total.failed, total.performed) };
 }
 

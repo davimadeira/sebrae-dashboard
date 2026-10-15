@@ -57,8 +57,8 @@ export function callbackMetrics(interactionsValues = [], callbacksValues = []) {
     // This export has no ACD acceptance events. Never substitute agent count for Answered.
     answered: null,
     unique: answered.size,
-    // A nonempty wrap-up is not proof of completion; its classification is still pending.
-    finished: null,
+    // Count original IDs, excluding eligible origins before adding successful callbacks.
+    finished: [...inbound].filter(id => !callbacks.has(id)).length + success,
     eligible: callbacks.size,
     performed, success, failed,
     pending: callbacks.size - performed,

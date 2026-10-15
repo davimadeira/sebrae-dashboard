@@ -20,6 +20,7 @@ test('agrupa pelo dia da origem, mantém datas inválidas visíveis e reconcilia
   assert.deepEqual(report.rows.map(row => row.date), ['2026-09-01', '2026-09-02', '2026-10-08', 'Sem data']);
   assert.equal(report.rows[0].success, 1);
   assert.equal(report.rows[1].success, 0);
+  assert.deepEqual(report.rows.map(row => row.finished), [1, 0, 1, 1]);
   assert.deepEqual(summarizeCallbackRows(report.rows), report.metrics);
 });
 test('combina filtros de mês, semana e dia e recalcula percentuais pelos totais', () => {
@@ -27,6 +28,7 @@ test('combina filtros de mês, semana e dia e recalcula percentuais pelos totais
   const september = filterCallbackRows(rows, { meses: ['09/2026'] });
   assert.equal(september.length, 2);
   assert.equal(summarizeCallbackRows(september).performedRate, .5);
+  assert.equal(summarizeCallbackRows(september).finished, 1);
   const day = filterCallbackRows(rows, { meses: ['09/2026'], semanas: [callbackDateLabels('2026-09-01').semanas], dias: ['01/09/2026'] });
   assert.equal(day.length, 1);
   assert.equal(summarizeCallbackRows(day).performedRate, 1);

@@ -9,7 +9,7 @@ const emptyFilters = () => ({ start: '', end: '' });
 const columns = [
   ['Atendidas', 'received', 'Voz de entrada; mistos separados', 'volume'],
   ['Atendidas únicas', 'unique', 'IDs de entrada com operador e conversa positiva', 'volume'],
-  ['Finalizadas', 'finished', 'Aguarda classificação de tabulações conclusivas', 'volume'],
+  ['Finalizadas', 'finished', 'Interações sem necessidade de callback + callbacks com sucesso, por ID original', 'volume'],
   ['Elegíveis para callback', 'eligible', 'IDs originais da aba Callbacks', 'return'],
   ['Callback realizado', 'performed', 'Ao menos uma saída vinculada por origem', 'return'],
   ['Callback com sucesso', 'success', 'Cliente atendeu ao retorno', 'return'],
@@ -87,7 +87,7 @@ export default function CallbackPanel({ user }) {
     <details className="bko-panel callback-section"><summary>Como os indicadores são calculados</summary><ul>
       <li>Atendidas: nome de exibição do volume de IDs distintos de voz com direção Entrada. Entrada/Saída fica separado enquanto seu tratamento nesse total é validado.</li>
       <li>Atendidas únicas: IDs distintos de voz e direção Entrada, com operador e Total de conversas maior que zero. Vários operadores na mesma conversa não multiplicam o indicador.</li>
-      <li>Finalizadas: exige tabulação conclusiva validada. Queda, ligação muda, falta de interação, erro sistêmico, valores vazios e classificações desconhecidas não comprovam conclusão. O número permanece pendente até concluir a classificação.</li>
+      <li>Finalizadas: interações de entrada que não constam entre as elegíveis para callback, somadas às interações com callback com sucesso. Cada ID original conta uma vez, na data da chamada original. Callbacks sem sucesso ou sem saída identificada não entram nesse total.</li>
       <li>Elegíveis e resultados vêm da aba Callbacks, uma vez por ID original. As cinco tabulações elegíveis são QUEDA DE LIGAÇÃO, Ligação muda/caída, LIGACAO MUDA, Erro sistêmico e Falta de interação, no canal de voz e direção Entrada.</li>
       <li>Regra de vínculo da planilha: ANI da entrada com DNIS da saída, operador em comum e início do retorno até 30 minutos após o término da origem. Havendo várias candidatas, usa-se a origem elegível mais recente; cada saída pertence a uma única origem.</li>
       <li>Realizado exige ao menos uma saída vinculada. Sucesso exige ao menos uma tentativa com Total de conversas positivo; Insucesso indica tentativas com zero ou vazio. Sucesso não comprova conclusão da orientação.</li>

@@ -15,7 +15,7 @@ test('exige conversa efetiva, separa mistos e mantém regras pendentes sem estim
     ['Entrada/Saída', '00:01:00', 'e', 'Ana', 'voz'],
     ['Entrada', '00:01:00', 'f', 'Ana', 'mensagem'],
   ], [ch, ['Sucesso', 'b'], ['SUCESSO', 'B'], ['Insucesso', 'g'], ['Sem saída identificada', 'c']]);
-  assert.deepEqual(metrics, { received: 3, answered: null, unique: 2, finished: null,
+  assert.deepEqual(metrics, { received: 3, answered: null, unique: 2, finished: 2,
     eligible: 3, performed: 2, success: 1, failed: 1, pending: 1,
     performedRate: 2/3, successRate: .5, failedRate: .5,
     potential: null, registered: null, registeredRate: null, mixed: 1 });
@@ -23,6 +23,7 @@ test('exige conversa efetiva, separa mistos e mantém regras pendentes sem estim
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
   const metrics = callbackMetrics([ih], [ch]);
   assert.equal(metrics.received, 0);
+  assert.equal(metrics.finished, 0);
   assert.equal(metrics.performedRate, null);
   assert.equal(metrics.successRate, null);
 });
@@ -30,4 +31,11 @@ test('estrutura ausente, status novos e duplicações conflitantes exigem revis�
   assert.throws(() => callbackMetrics([['Direção']], [ch]), { statusCode: 409 });
   assert.throws(() => callbackMetrics([ih], [ch, ['Novo status', 'a']]), /status de callback/);
   assert.throws(() => callbackMetrics([ih], [ch, ['Sucesso', 'a'], ['Insucesso', 'a']]), /resultados diferentes/);
+});
+
+test('finalizadas soma origens sem callback e sucessos sem duplicar operadores ou tentativas', () => {
+  const rows = [ih, ...['a', 'a', 'b', 'c', 'd'].map(id => ['Entrada', '00:01:00', id, 'Ana', 'voz'])];
+  const metrics = callbackMetrics(rows, [ch, ['Sucesso', 'b'], ['Sucesso', 'b'], ['Insucesso', 'c'], ['Sem saída identificada', 'd']]);
+  assert.equal(metrics.finished, 2);
+  assert.equal(metrics.finished, metrics.received - metrics.eligible + metrics.success);
 });
