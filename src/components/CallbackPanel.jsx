@@ -8,7 +8,6 @@ const percent = value => typeof value === 'number' ? (value * 100).toLocaleStrin
 const emptyFilters = () => ({ start: '', end: '' });
 const columns = [
   ['Recebidas', 'received', 'Voz de entrada; mistos separados', 'volume'],
-  ['Atendidas', 'answered', 'Aguarda contagem por atendimento/segmento', 'volume'],
   ['Atendidas únicas', 'unique', 'IDs de entrada com operador e conversa positiva', 'volume'],
   ['Finalizadas', 'finished', 'Aguarda classificação de tabulações conclusivas', 'volume'],
   ['Elegíveis para callback', 'eligible', 'IDs originais da aba Callbacks', 'return'],
@@ -73,7 +72,7 @@ export default function CallbackPanel({ user }) {
             <tbody>{rows.length ? rows.map(row => <tr key={row.date}>
               <th scope="row" className="callback-date-cell">{callbackDateLabels(row.date).dias}</th>
               {columns.map(([, key, note, group]) => <td key={key} className={'cb-' + group + (key.endsWith('Rate') ? ' callback-rate' : '')} title={row[key] === null ? note : undefined}>{valueOf(row, key)}</td>)}
-            </tr>) : <tr><td colSpan={16} className="callback-no-results">Nenhum registro para os filtros selecionados.</td></tr>}</tbody>
+            </tr>) : <tr><td colSpan={columns.length + 1} className="callback-no-results">Nenhum registro para os filtros selecionados.</td></tr>}</tbody>
             {rows.length > 0 && <tfoot><tr><th scope="row" className="callback-date-cell">Total</th>{columns.map(([, key, note, group]) => <td key={key} className={'cb-' + group} title={total[key] === null ? note : undefined}>{valueOf(total, key)}</td>)}</tr></tfoot>}
           </table>
         </div>
@@ -88,7 +87,6 @@ export default function CallbackPanel({ user }) {
     </>}
     <details className="bko-panel callback-section"><summary>Como os indicadores são calculados</summary><ul>
       <li>Recebidas: IDs distintos de voz com direção Entrada. Entrada/Saída fica separado enquanto seu tratamento no recebimento é validado.</li>
-      <li>Atendidas: aguarda confirmação da contagem por atendimento/segmento na extração. Contar nomes de operadores não substitui essa métrica.</li>
       <li>Atendidas únicas: IDs distintos de voz e direção Entrada, com operador e Total de conversas maior que zero. Vários operadores na mesma conversa não multiplicam o indicador.</li>
       <li>Finalizadas: exige tabulação conclusiva validada. Queda, ligação muda, falta de interação, erro sistêmico, valores vazios e classificações desconhecidas não comprovam conclusão. O número permanece pendente até concluir a classificação.</li>
       <li>Elegíveis e resultados vêm da aba Callbacks, uma vez por ID original. As cinco tabulações elegíveis são QUEDA DE LIGAÇÃO, Ligação muda/caída, LIGACAO MUDA, Erro sistêmico e Falta de interação, no canal de voz e direção Entrada.</li>
