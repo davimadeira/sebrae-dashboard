@@ -1,13 +1,13 @@
 import DateRangePicker from './DateRangePicker';
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, BarChart3, Loader2, RefreshCw } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { callbackDateLabels, filterCallbackDateRange, summarizeCallbackRows } from '../utils/callbackView';
 
 const number = value => typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
 const percent = value => typeof value === 'number' ? (value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%' : '—';
 const emptyFilters = () => ({ start: '', end: '' });
 const columns = [
-  ['Recebidas', 'received', 'Voz de entrada; mistos separados', 'volume'],
+  ['Atendidas', 'received', 'Voz de entrada; mistos separados', 'volume'],
   ['Atendidas únicas', 'unique', 'IDs de entrada com operador e conversa positiva', 'volume'],
   ['Finalizadas', 'finished', 'Aguarda classificação de tabulações conclusivas', 'volume'],
   ['Elegíveis para callback', 'eligible', 'IDs originais da aba Callbacks', 'return'],
@@ -52,15 +52,14 @@ export default function CallbackPanel({ user }) {
 
   return <section className="callback-page callback-compact">
     <header className="callback-panel-heading">
-      <h1>Callback</h1>
-      <DateRangePicker value={filters} onChange={setFilters} label="Data da chamada"/>
-    </header>
-    <div className="callback-toolbar">
-      <span><BarChart3 size={15}/>{data ? 'Planilha conectada' : 'Fonte: planilha de Callback'}{data && ' · ' + rows.length + ' dias exibidos'}</span>
-      <div>{data && <small>Atualizado às {new Date(data.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</small>}
+      <div className="callback-heading-copy"><h1>Callback</h1>
+        <p><span className={'callback-connection-dot' + (data ? ' is-connected' : '')}/>{data ? rows.length + ' dias no período' : 'Indicadores de atendimento'}{data && <span> · Atualizado às {new Date(data.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>}</p>
+      </div>
+      <div className="callback-heading-actions">
+        <DateRangePicker value={filters} onChange={setFilters} label="Data da chamada"/>
         <button type="button" className="callback-refresh" disabled={loading} onClick={() => setReload(value => value + 1)}><RefreshCw size={14} className={loading ? 'animate-spin' : ''}/>Atualizar</button>
       </div>
-    </div>
+    </header>
     {error && <div role="alert" className="ticket-error">{error}</div>}
     {loading ? <div className="ticket-empty" role="status"><Loader2 className="animate-spin" size={24}/><p>Carregando indicadores de Callback…</p></div> : data && <>
       <section className="callback-table-card" aria-label="Indicadores diários de callback">
@@ -86,7 +85,7 @@ export default function CallbackPanel({ user }) {
       <div className="callback-notice"><AlertCircle size={15}/><p><strong>—</strong> indica definição ou fonte pendente. Sucesso significa conversa com o cliente, não comprova atendimento concluído. <a href="https://docs.google.com/spreadsheets/d/1Egx88GkeZ9ZHQrijClJEXIEDlQBy-ImuW_G92uR65R4/edit" target="_blank" rel="noreferrer" className="underline">Abrir planilha</a></p></div>
     </>}
     <details className="bko-panel callback-section"><summary>Como os indicadores são calculados</summary><ul>
-      <li>Recebidas: IDs distintos de voz com direção Entrada. Entrada/Saída fica separado enquanto seu tratamento no recebimento é validado.</li>
+      <li>Atendidas: nome de exibição do volume de IDs distintos de voz com direção Entrada. Entrada/Saída fica separado enquanto seu tratamento nesse total é validado.</li>
       <li>Atendidas únicas: IDs distintos de voz e direção Entrada, com operador e Total de conversas maior que zero. Vários operadores na mesma conversa não multiplicam o indicador.</li>
       <li>Finalizadas: exige tabulação conclusiva validada. Queda, ligação muda, falta de interação, erro sistêmico, valores vazios e classificações desconhecidas não comprovam conclusão. O número permanece pendente até concluir a classificação.</li>
       <li>Elegíveis e resultados vêm da aba Callbacks, uma vez por ID original. As cinco tabulações elegíveis são QUEDA DE LIGAÇÃO, Ligação muda/caída, LIGACAO MUDA, Erro sistêmico e Falta de interação, no canal de voz e direção Entrada.</li>

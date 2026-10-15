@@ -510,9 +510,9 @@ table tbody td {
 .callback-wide-workspace>header img{max-height:32px}
 .callback-wide-workspace .bko-sidebar{padding:4px;margin-bottom:8px;border-radius:8px}
 .callback-wide-workspace .bko-sidebar button{padding-top:8px;padding-bottom:8px}
-.callback-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:4px}
+.callback-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px;padding:12px 16px;background:#fff;border:1px solid #e0e8f0;border-radius:12px}
 .callback-panel-heading h1{font-size:18px;font-weight:750;letter-spacing:-.025em;color:#204e6e;margin:0}
-.callback-panel-heading .bi-date-filter{display:flex;align-items:center;gap:10px;width:380px;margin:0}
+.callback-panel-heading .bi-date-filter{display:flex;align-items:center;gap:10px;width:340px;margin:0}
 .callback-panel-heading .bi-date-label{white-space:nowrap;margin:0}
 .callback-panel-heading .bi-date-trigger{min-height:34px;padding:7px 10px}
 .callback-compact .callback-toolbar{margin:4px 0 6px}
@@ -520,4 +520,15 @@ table tbody td {
 .callback-compact .callback-table-legend{padding:6px 10px}
 .callback-compact .callback-summary-cards{margin:12px 0}
 .dark .callback-panel-heading h1{color:#b3ddf2}
+.callback-heading-copy p{display:flex;align-items:center;gap:5px;margin:4px 0 0;font-size:11px;color:#71839b}
+.callback-connection-dot{width:6px;height:6px;border-radius:50%;background:#94a3b8}.callback-connection-dot.is-connected{background:#20a881}
+.callback-heading-actions{display:flex;align-items:center;gap:10px}
+.callback-heading-actions .callback-refresh{min-height:34px;border-radius:7px;background:#edf5fc;border-color:#d7e6f3;color:#245779;padding:7px 12px}
+.callback-wide-workspace .bko-sidebar{background:transparent;border:0;border-bottom:1px solid #dce5ef;border-radius:0;box-shadow:none;padding:0 0 7px;gap:6px}
+.callback-wide-workspace .bko-sidebar button{color:#61758c;background:transparent;border:1px solid transparent;box-shadow:none;padding:8px 16px;font-size:12px}
+.callback-wide-workspace .bko-sidebar button:hover{background:#e9f1f8;color:#21577b}
+.callback-wide-workspace .bko-sidebar button[aria-current="page"]{background:#e6f2fb;border-color:#cee3f3;color:#12649a;box-shadow:none}
+.callback-wide-workspace .bko-sidebar button svg{width:16px;height:16px;color:inherit}
+.dark .callback-panel-heading{background:#172438;border-color:#35465e}.dark .callback-wide-workspace .bko-sidebar{border-color:#35465e}.dark .callback-wide-workspace .bko-sidebar button{color:#afc2d7}.dark .callback-wide-workspace .bko-sidebar button[aria-current="page"]{background:#243e58;color:#c2e4ff;border-color:#365775}.dark .callback-heading-actions .callback-refresh{background:#243e58;border-color:#365775;color:#c2e4ff}
+@media(max-width:700px){.callback-heading-actions{width:100%;flex-wrap:wrap}.callback-heading-actions .bi-date-filter{flex:1;min-width:200px}.callback-heading-copy p{flex-wrap:wrap}.callback-panel-heading{padding:10px 12px}}
 @media(max-width:700px){.callback-panel-heading{flex-wrap:wrap;gap:6px}.callback-panel-heading .bi-date-filter{width:100%;max-width:380px}.callback-compact .callback-table-scroll{height:calc(100dvh - 260px);min-height:300px}}
