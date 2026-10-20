@@ -10,7 +10,9 @@ export const createHandler = (auth = authorize, token = accessToken, request = f
   if (req.method !== 'GET') return res.status(405).json({ error: 'Método não permitido.' });
   try {
     await auth(req);
-    const response = await request(`${base}/values:batchGet?ranges=${encodeURIComponent("'Interações'!A:N")}&ranges=${encodeURIComponent("'Callbacks'!A:M")}&valueRenderOption=FORMATTED_VALUE`, { headers: { Authorization: `Bearer ${await token()}` }, signal: AbortSignal.timeout(20000) });
+    const bearer = await token();
+    const options = { headers: { Authorization: `Bearer ${bearer}` }, signal: AbortSignal.timeout(20000) };
+    const response = await request(`${base}/values:batchGet?ranges=${encodeURIComponent("'Interações'!A:ZZ")}&ranges=${encodeURIComponent("'Callbacks'!A:ZZ")}&valueRenderOption=FORMATTED_VALUE`, options);
     if (!response.ok) {
       const account = process.env.GCP_SERVICE_ACCOUNT_EMAIL || 'a conta de serviço do dashboard';
       const error = [403, 404].includes(response.status)
@@ -21,8 +23,15 @@ export const createHandler = (auth = authorize, token = accessToken, request = f
     const ranges = (await response.json()).valueRanges || [];
     const interactions = ranges.find(range => range.range.includes('Interações'))?.values || [];
     const callbacks = ranges.find(range => range.range.includes('Callbacks'))?.values || [];
-    const report = callbackReport(interactions, callbacks);
-    return res.status(200).json({ ...report, updatedAt: new Date().toISOString(), source: { spreadsheetId, tabs: ['Interações', 'Callbacks'] } });
+    let foco = [];
+    try {
+      const focoResponse = await request(`${base}/values/${encodeURIComponent("'Foco'!A:Z")}?valueRenderOption=FORMATTED_VALUE`, options);
+      if (focoResponse.ok) foco = (await focoResponse.json()).values || [];
+    } catch {
+      // Foco is optional while its import automation is being configured.
+    }
+    const report = callbackReport(interactions, callbacks, foco);
+    return res.status(200).json({ ...report, updatedAt: new Date().toISOString(), source: { spreadsheetId, tabs: ['Interações', 'Callbacks', ...(foco.length ? ['Foco'] : [])] } });
   } catch (error) {
     return res.status(error.statusCode || 503).json({ error: error.statusCode ? error.message : 'Não foi possível carregar os dados de Callback.' });
   }

@@ -18,9 +18,9 @@ const columns = [
   ['Callback sem sucesso', 'failed', 'Tentativas sem conversa', 'return'],
   ['% sem sucesso', 'failedRate', 'Sem sucesso ÷ realizados', 'return'],
   ['Callback não realizado', 'pending', 'Sem saída identificada na base', 'return'],
-  ['Potencial de registros', 'potential', 'Composição em validação', 'focus'],
-  ['Registro no Foco', 'registered', 'Fonte separada pendente', 'focus'],
-  ['% registro no Foco', 'registeredRate', 'Aguarda potencial e fonte do mesmo período', 'focus'],
+  ['Potencial de registros', 'potential', 'Mesmo total de interações finalizadas', 'focus'],
+  ['Registro no Foco', 'registered', 'Protocolo CNR do Foco vinculado à Marca externa do Genesys', 'focus'],
+  ['% registro no Foco', 'registeredRate', 'Registros no Foco ÷ potencial de registros', 'focus'],
 ];
 const valueOf = (row, key) => key.endsWith('Rate') ? percent(row[key]) : number(row[key]);
 
@@ -93,7 +93,8 @@ export default function CallbackPanel({ user }) {
       <li>Realizado exige ao menos uma saída vinculada. Sucesso exige ao menos uma tentativa com Total de conversas positivo; Insucesso indica tentativas com zero ou vazio. Sucesso não comprova conclusão da orientação.</li>
       <li>Sem saída identificada é apresentado como não realizado na base disponível; arquivos ausentes e retornos fora dos critérios podem afetar essa classificação. Entrada/Saída não é somada automaticamente aos resultados principais.</li>
       <li>As taxas são: realizados ÷ elegíveis; sucesso ÷ realizados; sem sucesso ÷ realizados. Tentativas adicionais não multiplicam o número de chamadas originais.</li>
-      <li>Potencial de registros aguarda definição. Registro no Foco depende de fonte separada; sua taxa exige potencial validado e o mesmo período nas duas bases.</li>
+      <li>Potencial de registros é igual ao total de Finalizadas. Registro no Foco cruza o Protocolo CNR da aba Foco com a Marca externa do Genesys e considera somente registros de Telefone com status Concluído. Cada conversa original e cada protocolo contam uma vez, mesmo que existam linhas repetidas no Foco.</li>
+      <li>% registro no Foco é a quantidade registrada dividida pelo potencial no mesmo período. Quando a aba Foco ou a coluna Marca externa não estiver disponível, o painel exibe — sem interromper os demais indicadores.</li>
       <li>Cada linha usa a data da chamada original. O intervalo inclui a data inicial e a data final e atualiza a tabela, os totais e os percentuais. Escolha os dois dias e clique em Aplicar. Todo o período remove o recorte após aplicar. Use Atualizar depois de atualizar a planilha.</li>
     </ul><p className="callback-note"><a href="https://help.genesys.cloud/faqs/what-is-the-difference-between-the-answered-and-handle-metrics/" target="_blank" rel="noreferrer" className="underline">Referência: Genesys — diferença entre Answered e Handle</a></p></details>
   </section>;

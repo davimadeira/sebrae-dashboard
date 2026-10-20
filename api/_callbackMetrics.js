@@ -1,4 +1,5 @@
 const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+const headerKey = value => normalize(value).replace(/[^a-z0-9]/g, '');
 const cell = (row, index) => String(row[index] ?? '').trim();
 const invalid = message => Object.assign(new Error(message), { statusCode: 409 });
 
@@ -19,9 +20,32 @@ function columns(values, labels) {
   return indices;
 }
 
-export function callbackMetrics(interactionsValues = [], callbacksValues = []) {
+function focoProtocols(values) {
+  const headerIndex = values.findIndex(row => row.some(value => headerKey(value) === 'protocolocnr'));
+  if (headerIndex < 0) return null;
+  const headers = values[headerIndex];
+  const index = label => headers.findIndex(value => headerKey(value) === label);
+  const protocol = index('protocolocnr');
+  const channel = index('canaldeatendimento');
+  const status = index('status');
+  if ([protocol, channel, status].some(value => value < 0)) return null;
+  const protocols = new Set();
+  let inheritedChannel = '';
+  for (const row of values.slice(headerIndex + 1)) {
+    const rowChannel = normalize(cell(row, channel));
+    if (rowChannel) inheritedChannel = rowChannel;
+    if (inheritedChannel !== 'telefone' || normalize(cell(row, status)) !== 'concluido') continue;
+    const value = normalize(cell(row, protocol));
+    if (value) protocols.add(value);
+  }
+  return protocols;
+}
+
+export function callbackMetrics(interactionsValues = [], callbacksValues = [], focoValues = []) {
   const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Total de conversas']);
   const c = columns(callbacksValues, ['ID da chamada original', 'Status do callback']);
+  const externalMark = (interactionsValues[0] || []).findIndex(header => normalize(header) === normalize('Marca externa'));
+  const protocols = focoProtocols(focoValues);
   const callbacks = new Map();
   for (const row of callbacksValues.slice(1)) {
     const id = normalize(cell(row, c['ID da chamada original']));
@@ -35,7 +59,7 @@ export function callbackMetrics(interactionsValues = [], callbacksValues = []) {
     }
     callbacks.set(id, status);
   }
-  const inbound = new Set(), answered = new Set(), mixed = new Set();
+  const inbound = new Set(), answered = new Set(), mixed = new Set(), marksByConversation = new Map();
   for (const row of interactionsValues.slice(1)) {
     const id = normalize(cell(row, i['ID de conversa']));
     if (!id || normalize(cell(row, i['Tipo de mídia'])) !== 'voz') continue;
@@ -43,6 +67,13 @@ export function callbackMetrics(interactionsValues = [], callbacksValues = []) {
     if (direction === 'entrada/saida') mixed.add(id);
     if (direction !== 'entrada') continue;
     inbound.add(id);
+    if (externalMark >= 0) {
+      const mark = normalize(cell(row, externalMark));
+      if (mark) {
+        if (!marksByConversation.has(id)) marksByConversation.set(id, new Set());
+        marksByConversation.get(id).add(mark);
+      }
+    }
     if (cell(row, i['Usuários']) && hasConversation(cell(row, i['Total de conversas']))) {
       answered.add(id);
     }
@@ -52,22 +83,25 @@ export function callbackMetrics(interactionsValues = [], callbacksValues = []) {
   const failed = statuses.filter(status => status === 'insucesso').length;
   const performed = success + failed;
   const rate = (value, total) => total ? value / total : null;
+  const finishedIds = new Set([...inbound].filter(id => !callbacks.has(id) || callbacks.get(id) === 'sucesso'));
+  const registered = protocols && externalMark >= 0
+    ? [...finishedIds].filter(id => [...(marksByConversation.get(id) || [])].some(mark => protocols.has(mark))).length
+    : null;
   return {
     received: inbound.size,
     // This export has no ACD acceptance events. Never substitute agent count for Answered.
     answered: null,
     unique: answered.size,
-    // Count original IDs, excluding eligible origins before adding successful callbacks.
-    finished: [...inbound].filter(id => !callbacks.has(id)).length + success,
+    finished: finishedIds.size,
     eligible: callbacks.size,
     performed, success, failed,
     pending: callbacks.size - performed,
     performedRate: rate(performed, callbacks.size),
     successRate: rate(success, performed),
     failedRate: rate(failed, performed),
-    potential: null,
-    registered: null,
-    registeredRate: null,
+    potential: finishedIds.size,
+    registered,
+    registeredRate: registered === null ? null : rate(registered, finishedIds.size),
     mixed: mixed.size,
   };
 }
@@ -84,7 +118,7 @@ function dayKey(value) {
   return date.toISOString().slice(0, 10);
 }
 
-export function callbackReport(interactions, callbacks) {
+export function callbackReport(interactions, callbacks, foco = []) {
   const i = columns(interactions, ['Data', 'ID de conversa']);
   const c = columns(callbacks, ['Data da chamada', 'ID da chamada original']);
   const buckets = new Map();
@@ -103,9 +137,9 @@ export function callbackReport(interactions, callbacks) {
   group(interactions, i.Data, i['ID de conversa'], 'interactions');
   group(callbacks, c['Data da chamada'], c['ID da chamada original'], 'callbacks');
   return {
-    metrics: callbackMetrics(interactions, callbacks),
+    metrics: callbackMetrics(interactions, callbacks, foco),
     rows: [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => ({
-      date, ...callbackMetrics(values.interactions, values.callbacks),
+      date, ...callbackMetrics(values.interactions, values.callbacks, foco),
     })),
   };
 }

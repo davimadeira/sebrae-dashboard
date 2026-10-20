@@ -18,7 +18,28 @@ test('exige conversa efetiva, separa mistos e mantém regras pendentes sem estim
   assert.deepEqual(metrics, { received: 3, answered: null, unique: 2, finished: 2,
     eligible: 3, performed: 2, success: 1, failed: 1, pending: 1,
     performedRate: 2/3, successRate: .5, failedRate: .5,
-    potential: null, registered: null, registeredRate: null, mixed: 1 });
+    potential: 2, registered: null, registeredRate: null, mixed: 1 });
+});
+
+test('cruza Protocolo CNR com Marca externa sem multiplicar duplicidades do Foco', () => {
+  const interactions = [[...ih, 'Marca externa'],
+    ['Entrada', '00:01:00', 'a', 'Ana', 'voz', 'cnr-1'],
+    ['Entrada', '00:01:00', 'b', 'Ana', 'voz', 'cnr-2'],
+    ['Entrada', '00:01:00', 'c', 'Ana', 'voz', 'cnr-3'],
+  ];
+  const foco = [
+    ['Relatório exportado'],
+    ['Interação Foco nº', 'Canal de Atendimento', 'Status', 'Protocolo CNR'],
+    ['1', 'Telefone', 'Concluído', 'CNR-1'],
+    ['2', '', 'Concluído', 'cnr-1'],
+    ['3', 'Email', 'Concluído', 'cnr-2'],
+    ['4', 'Telefone', 'Em andamento', 'cnr-3'],
+  ];
+  const metrics = callbackMetrics(interactions, [ch, ['Sucesso', 'b'], ['Insucesso', 'c']], foco);
+  assert.equal(metrics.finished, 2);
+  assert.equal(metrics.potential, 2);
+  assert.equal(metrics.registered, 1);
+  assert.equal(metrics.registeredRate, .5);
 });
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
   const metrics = callbackMetrics([ih], [ch]);
