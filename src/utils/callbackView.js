@@ -15,6 +15,10 @@ export function filterCallbackRows(rows, filters) {
 export function summarizeCallbackRows(rows) {
   const keys = ['received', 'unique', 'finished', 'eligible', 'performed', 'success', 'failed', 'pending', 'potential', 'mixed'];
   const total = Object.fromEntries(keys.map(key => [key, rows.reduce((sum, row) => sum + row[key], 0)]));
+  // SIP callbacks are counted on the day they happen while eligibility is
+  // counted on the original inbound day. Recalculate the filtered total so
+  // daily zero floors do not hide pending callbacks across a date range.
+  total.pending = Math.max(total.eligible - total.performed, 0);
   const registered = rows.length && rows.every(row => typeof row.registered === 'number')
     ? rows.reduce((sum, row) => sum + row.registered, 0)
     : null;

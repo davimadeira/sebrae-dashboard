@@ -10,16 +10,16 @@ const columns = [
   ['Atendidas', 'received', 'Voz de entrada; mistos separados', 'volume'],
   ['Atendidas únicas', 'unique', 'IDs de entrada com operador e conversa positiva', 'volume'],
   ['Finalizadas', 'finished', 'Interações sem necessidade de callback + callbacks com sucesso, por ID original', 'volume'],
-  ['Elegíveis para callback', 'eligible', 'IDs originais da aba Callbacks', 'return'],
-  ['Callback realizado', 'performed', 'Ao menos uma saída vinculada por origem', 'return'],
+  ['Elegíveis para callback', 'eligible', 'Interações de voz com uma das tabulações elegíveis', 'return'],
+  ['Callback realizado', 'performed', 'Interações cujo ANI começa com sip:', 'return'],
   ['% realizado', 'performedRate', 'Realizados ÷ elegíveis', 'return'],
-  ['Callback com sucesso', 'success', 'Cliente atendeu ao retorno', 'return'],
+  ['Callback com sucesso', 'success', 'Callback SIP com Total de conversas maior que zero', 'return'],
   ['% com sucesso', 'successRate', 'Sucesso ÷ realizados', 'return'],
-  ['Callback sem sucesso', 'failed', 'Tentativas sem conversa', 'return'],
+  ['Callback sem sucesso', 'failed', 'Callback SIP com Total de conversas vazio ou zero', 'return'],
   ['% sem sucesso', 'failedRate', 'Sem sucesso ÷ realizados', 'return'],
-  ['Callback não realizado', 'pending', 'Sem saída identificada na base', 'return'],
-  ['Potencial de registros', 'potential', 'Mesmo total de interações finalizadas', 'focus'],
-  ['Registro no Foco', 'registered', 'Protocolo CNR do Foco vinculado à Marca externa do Genesys', 'focus'],
+  ['Callback não realizado', 'pending', 'Elegíveis menos callbacks SIP realizados', 'return'],
+  ['Potencial de registros', 'potential', 'Finalizadas menos Teste de URA e callbacks sem sucesso', 'focus'],
+  ['Registro no Foco', 'registered', 'Registros de telefonia na aba Foco, pela data de abertura', 'focus'],
   ['% registro no Foco', 'registeredRate', 'Registros no Foco ÷ potencial de registros', 'focus'],
 ];
 const valueOf = (row, key) => key.endsWith('Rate') ? percent(row[key]) : number(row[key]);
@@ -87,14 +87,15 @@ export default function CallbackPanel({ user }) {
     <details className="bko-panel callback-section"><summary>Como os indicadores são calculados</summary><ul>
       <li>Atendidas: nome de exibição do volume de IDs distintos de voz com direção Entrada. Entrada/Saída fica separado enquanto seu tratamento nesse total é validado.</li>
       <li>Atendidas únicas: IDs distintos de voz e direção Entrada, com operador e Total de conversas maior que zero. Vários operadores na mesma conversa não multiplicam o indicador.</li>
-      <li>Finalizadas: interações de entrada que não constam entre as elegíveis para callback, somadas às interações com callback com sucesso. Cada ID original conta uma vez, na data da chamada original. Callbacks sem sucesso ou sem saída identificada não entram nesse total.</li>
-      <li>Elegíveis e resultados vêm da aba Callbacks, uma vez por ID original. As cinco tabulações elegíveis são QUEDA DE LIGAÇÃO, Ligação muda/caída, LIGACAO MUDA, Erro sistêmico e Falta de interação, no canal de voz e direção Entrada.</li>
-      <li>Regra de vínculo da planilha: ANI da entrada com DNIS da saída, operador em comum e início do retorno até 30 minutos após o término da origem. Havendo várias candidatas, usa-se a origem elegível mais recente; cada saída pertence a uma única origem.</li>
-      <li>Realizado exige ao menos uma saída vinculada. Sucesso exige ao menos uma tentativa com Total de conversas positivo; Insucesso indica tentativas com zero ou vazio. Sucesso não comprova conclusão da orientação.</li>
-      <li>Sem saída identificada é apresentado como não realizado na base disponível; arquivos ausentes e retornos fora dos critérios podem afetar essa classificação. Entrada/Saída não é somada automaticamente aos resultados principais.</li>
+      <li>Finalizadas: interações de entrada que não são elegíveis, somadas aos callbacks SIP com sucesso. Callbacks sem sucesso não entram nesse total.</li>
+      <li>Elegíveis: interações de voz com as tabulações Queda de ligação, Ligação muda, Erro sistêmico ou Falta de interação, independentemente da direção.</li>
+      <li>Callback realizado: interação cujo ANI começa com <strong>sip:</strong>. Não há vínculo por telefone, operador ou limite de horário.</li>
+      <li>Sucesso: callback SIP com Total de conversas maior que zero. Sem sucesso: callback SIP com Total de conversas vazio ou zero.</li>
+      <li>Callback não realizado é a diferença entre elegíveis e realizados, sem resultado negativo quando houver mais callbacks SIP do que elegíveis.</li>
       <li>As taxas são: realizados ÷ elegíveis; sucesso ÷ realizados; sem sucesso ÷ realizados. Tentativas adicionais não multiplicam o número de chamadas originais.</li>
-      <li>Potencial de registros é igual ao total de Finalizadas. Registro no Foco cruza o Protocolo CNR da aba Foco com a Marca externa do Genesys e considera somente registros de Telefone com status Concluído. Cada conversa original e cada protocolo contam uma vez, mesmo que existam linhas repetidas no Foco.</li>
-      <li>% registro no Foco é a quantidade registrada dividida pelo potencial no mesmo período. Quando a aba Foco ou a coluna Marca externa não estiver disponível, o painel exibe — sem interromper os demais indicadores.</li>
+      <li>Potencial de registros é Finalizadas menos as interações de Teste de URA (na base atual, “Teste de atendimento”) e callbacks sem sucesso.</li>
+      <li>Registro no Foco é a quantidade de registros de telefonia na aba Foco, na data de abertura correspondente. Não há cruzamento com Marca externa ou Protocolo CNR.</li>
+      <li>% registro no Foco é a quantidade registrada dividida pelo potencial no mesmo período. Quando a aba Foco não estiver disponível, o painel exibe — sem interromper os demais indicadores.</li>
       <li>Cada linha usa a data da chamada original. O intervalo inclui a data inicial e a data final e atualiza a tabela, os totais e os percentuais. Escolha os dois dias e clique em Aplicar. Todo o período remove o recorte após aplicar. Use Atualizar depois de atualizar a planilha.</li>
     </ul><p className="callback-note"><a href="https://help.genesys.cloud/faqs/what-is-the-difference-between-the-answered-and-handle-metrics/" target="_blank" rel="noreferrer" className="underline">Referência: Genesys — diferença entre Answered e Handle</a></p></details>
   </section>;

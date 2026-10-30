@@ -2,61 +2,58 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { callbackMetrics } from '../api/_callbackMetrics.js';
 
-// Reordered headers exercise lookup rather than fixed column positions.
-const ih = ['Direção', 'Total de conversas', 'ID de conversa', 'Usuários', 'Tipo de mídia'];
-const ch = ['Status do callback', 'ID da chamada original'];
-test('exige conversa efetiva, separa mistos e mantém regras pendentes sem estimativas', () => {
-  const metrics = callbackMetrics([ih,
-    ['Entrada', '00:01:00.000', 'a', 'Ana', 'voz'],
-    ['Entrada', '00:01:00.000', 'A', 'Bia', 'voz'],
-    ['Entrada', '00:00:00,001', 'b', 'Ana', 'voz'],
-    ['Entrada', '00:00:00', 'c', 'Ana', 'voz'],
-    ['Saída', '00:01:00', 'd', 'Ana', 'voz'],
-    ['Entrada/Saída', '00:01:00', 'e', 'Ana', 'voz'],
-    ['Entrada', '00:01:00', 'f', 'Ana', 'mensagem'],
-  ], [ch, ['Sucesso', 'b'], ['SUCESSO', 'B'], ['Insucesso', 'g'], ['Sem saída identificada', 'c']]);
-  assert.deepEqual(metrics, { received: 3, answered: null, unique: 2, finished: 2,
-    eligible: 3, performed: 2, success: 1, failed: 1, pending: 1,
-    performedRate: 2/3, successRate: .5, failedRate: .5,
-    potential: 2, registered: null, registeredRate: null, mixed: 1 });
+const headers = ['Direção', 'Total de conversas', 'ID de conversa', 'Usuários', 'Tipo de mídia', 'Finalização', 'ANI'];
+
+test('usa a tabulação para elegíveis e ANI sip para callbacks', () => {
+  const metrics = callbackMetrics([headers,
+    ['Entrada', '00:00:00', 'e1', '', 'voz', 'Queda de ligação', 'tel:+55'],
+    ['Entrada', '00:00:00', 'e2', '', 'voz', 'ERRO SISTÊMICO', 'tel:+55'],
+    ['Entrada', '00:02:00', 'n1', 'Ana', 'voz', 'Atendimento concluído', 'tel:+55'],
+    ['Saída', '00:01:00', 's1', 'Ana', 'voz', '', 'sip:callback-1'],
+    ['Saída', '00:00:00', 's2', 'Ana', 'voz', '', 'sip:callback-2'],
+    ['Saída', '', 's3', 'Ana', 'voz', '', 'sip:callback-3'],
+    ['Saída', '00:02:00', 'x', 'Ana', 'voz', '', 'tel:+55'],
+  ]);
+  assert.equal(metrics.eligible, 2);
+  assert.equal(metrics.performed, 3);
+  assert.equal(metrics.success, 1);
+  assert.equal(metrics.failed, 2);
+  assert.equal(metrics.pending, 0);
+  assert.equal(metrics.finished, 2); // one non-eligible inbound plus one successful callback
+  assert.equal(metrics.potential, 0); // finalizadas menos callbacks SIP sem sucesso
+  assert.equal(metrics.successRate, 1 / 3);
 });
 
-test('cruza Protocolo CNR com Marca externa sem multiplicar duplicidades do Foco', () => {
-  const interactions = [[...ih, 'Marca externa'],
-    ['Entrada', '00:01:00', 'a', 'Ana', 'voz', 'cnr-1'],
-    ['Entrada', '00:01:00', 'b', 'Ana', 'voz', 'cnr-2'],
-    ['Entrada', '00:01:00', 'c', 'Ana', 'voz', 'cnr-3'],
-  ];
-  const foco = [
-    ['Relatório exportado'],
-    ['Interação Foco nº', 'Canal de Atendimento', 'Status', 'Protocolo CNR'],
-    ['1', 'Telefone', 'Concluído', 'CNR-1'],
-    ['2', '', 'Concluído', 'cnr-1'],
-    ['3', 'Email', 'Concluído', 'cnr-2'],
-    ['4', 'Telefone', 'Em andamento', 'cnr-3'],
-  ];
-  const metrics = callbackMetrics(interactions, [ch, ['Sucesso', 'b'], ['Insucesso', 'c']], foco);
+test('retira Teste de atendimento do potencial de registros', () => {
+  const metrics = callbackMetrics([headers,
+    ['Entrada', '00:01:00', 't1', 'Ana', 'voz', 'Teste de atendimento', 'tel:+55'],
+    ['Entrada', '00:01:00', 'n1', 'Ana', 'voz', 'Atendimento concluído', 'tel:+55'],
+  ]);
   assert.equal(metrics.finished, 2);
-  assert.equal(metrics.potential, 2);
-  assert.equal(metrics.registered, 1);
-  assert.equal(metrics.registeredRate, .5);
+  assert.equal(metrics.potential, 1);
 });
+
+test('aceita todas as tabulações elegíveis e separa Entrada/Saída', () => {
+  const metrics = callbackMetrics([headers,
+    ['Entrada', '', 'a', '', 'voz', 'Ligação muda', 'tel:+55'],
+    ['Entrada', '', 'b', '', 'voz', 'Ligação muda/caída', 'tel:+55'],
+    ['Entrada', '', 'c', '', 'voz', 'Falta de interação', 'tel:+55'],
+    ['Entrada/Saída', '00:01:00', 'd', 'Ana', 'voz', 'Queda de ligação', 'sip:callback'],
+  ]);
+  assert.equal(metrics.eligible, 4);
+  assert.equal(metrics.mixed, 1);
+  assert.equal(metrics.performed, 1);
+  assert.equal(metrics.success, 1);
+});
+
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
-  const metrics = callbackMetrics([ih], [ch]);
+  const metrics = callbackMetrics([headers]);
   assert.equal(metrics.received, 0);
   assert.equal(metrics.finished, 0);
   assert.equal(metrics.performedRate, null);
   assert.equal(metrics.successRate, null);
 });
-test('estrutura ausente, status novos e duplicações conflitantes exigem revisão', () => {
-  assert.throws(() => callbackMetrics([['Direção']], [ch]), { statusCode: 409 });
-  assert.throws(() => callbackMetrics([ih], [ch, ['Novo status', 'a']]), /status de callback/);
-  assert.throws(() => callbackMetrics([ih], [ch, ['Sucesso', 'a'], ['Insucesso', 'a']]), /resultados diferentes/);
-});
 
-test('finalizadas soma origens sem callback e sucessos sem duplicar operadores ou tentativas', () => {
-  const rows = [ih, ...['a', 'a', 'b', 'c', 'd'].map(id => ['Entrada', '00:01:00', id, 'Ana', 'voz'])];
-  const metrics = callbackMetrics(rows, [ch, ['Sucesso', 'b'], ['Sucesso', 'b'], ['Insucesso', 'c'], ['Sem saída identificada', 'd']]);
-  assert.equal(metrics.finished, 2);
-  assert.equal(metrics.finished, metrics.received - metrics.eligible + metrics.success);
+test('estrutura ausente exige revisão', () => {
+  assert.throws(() => callbackMetrics([['Direção']]), { statusCode: 409 });
 });

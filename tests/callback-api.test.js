@@ -23,7 +23,7 @@ test('só permite consulta e orienta sobre permissão do Google', async () => {
 });
 test('retorna apenas métricas agregadas, sem dados pessoais das linhas', async () => {
   const handler = createHandler(async () => {}, async () => 'token', async () => ({ ok: true, json: async () => ({ valueRanges: [
-    { range: "'Interações'!A1:N2", values: [['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Total de conversas', 'Data'], ['private-id', 'voz', 'Entrada', 'Pessoa', '00:01:00', '01/09/26 12:00']] },
+    { range: "'Interações'!A1:N2", values: [['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Total de conversas', 'Data', 'Finalização', 'ANI'], ['private-id', 'voz', 'Entrada', 'Pessoa', '00:01:00', '01/09/26 12:00', '', 'tel:+55']] },
     { range: "'Callbacks'!A1:M1", values: [['ID da chamada original', 'Status do callback', 'Data da chamada']] },
   ] }) }));
   const response = res();

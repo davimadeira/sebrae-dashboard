@@ -3,6 +3,8 @@ const headerKey = value => normalize(value).replace(/[^a-z0-9]/g, '');
 const cell = (row, index) => String(row[index] ?? '').trim();
 const invalid = message => Object.assign(new Error(message), { statusCode: 409 });
 
+const eligibleFinalizations = new Set(['erro sistemico', 'queda de ligacao', 'ligacao muda', 'ligacao muda/caida', 'falta de interacao']);
+
 function hasConversation(value) {
   const duration = String(value ?? '').trim().replace(',', '.');
   if (!duration) return false;
@@ -14,132 +16,87 @@ function hasConversation(value) {
 function columns(values, labels) {
   const headers = values[0] || [];
   const indices = Object.fromEntries(labels.map(label => [label, headers.findIndex(header => normalize(header) === normalize(label))]));
-  if (Object.values(indices).some(index => index < 0)) {
-    throw invalid('A estrutura da planilha Callback mudou. Confira os cabeçalhos das abas Interações e Callbacks.');
-  }
+  if (Object.values(indices).some(index => index < 0)) throw invalid('A estrutura da aba Interações mudou. Confira os cabeçalhos antes de atualizar o painel Callback.');
   return indices;
 }
 
-function focoProtocols(values) {
-  const headerIndex = values.findIndex(row => row.some(value => headerKey(value) === 'protocolocnr'));
+function focoTelephoneByDate(values) {
+  const headerIndex = values.findIndex(row => row.some(value => headerKey(value) === 'canaldeatendimento'));
   if (headerIndex < 0) return null;
   const headers = values[headerIndex];
   const index = label => headers.findIndex(value => headerKey(value) === label);
-  const protocol = index('protocolocnr');
-  const channel = index('canaldeatendimento');
-  const status = index('status');
-  if ([protocol, channel, status].some(value => value < 0)) return null;
-  const protocols = new Set();
-  let inheritedChannel = '';
+  const date = index('datadeabertura'), channel = index('canaldeatendimento');
+  if (date < 0 || channel < 0) return null;
+  const result = new Map(); let inheritedDate = '', inheritedChannel = '';
   for (const row of values.slice(headerIndex + 1)) {
-    const rowChannel = normalize(cell(row, channel));
+    // O indicador é quantidade de linhas de Telefonia. Protocolo e interação
+    // podem se repetir ou estar vazios e, por isso, não entram como critério.
+    if (!row.some(value => cell([value], 0))) continue;
+    const rowDate = cell(row, date), rowChannel = cell(row, channel);
+    if (rowDate) inheritedDate = rowDate;
     if (rowChannel) inheritedChannel = rowChannel;
-    if (inheritedChannel !== 'telefone' || normalize(cell(row, status)) !== 'concluido') continue;
-    const value = normalize(cell(row, protocol));
-    if (value) protocols.add(value);
+    if (!normalize(inheritedChannel).startsWith('telefon')) continue;
+    const key = dayKey(inheritedDate);
+    result.set(key, (result.get(key) || 0) + 1);
   }
-  return protocols;
+  return result;
 }
 
-export function callbackMetrics(interactionsValues = [], callbacksValues = [], focoValues = []) {
-  const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Total de conversas']);
-  const c = columns(callbacksValues, ['ID da chamada original', 'Status do callback']);
-  const externalMark = (interactionsValues[0] || []).findIndex(header => normalize(header) === normalize('Marca externa'));
-  const protocols = focoProtocols(focoValues);
-  const callbacks = new Map();
-  for (const row of callbacksValues.slice(1)) {
-    const id = normalize(cell(row, c['ID da chamada original']));
-    if (!id) continue;
-    const status = normalize(cell(row, c['Status do callback']));
-    if (!['sucesso', 'insucesso', 'sem saida identificada'].includes(status)) {
-      throw invalid('Há um status de callback não reconhecido. Use Sucesso, Insucesso ou Sem saída identificada.');
-    }
-    if (callbacks.has(id) && callbacks.get(id) !== status) {
-      throw invalid('Há resultados diferentes para o mesmo ID na aba Callbacks. Revise os registros duplicados.');
-    }
-    callbacks.set(id, status);
-  }
-  const inbound = new Set(), answered = new Set(), mixed = new Set(), marksByConversation = new Map();
+export function callbackMetrics(interactionsValues = [], _callbacksValues = [], focoValues = [], registeredOverride) {
+  const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Finalização', 'Total de conversas', 'ANI']);
+  const focoByDate = registeredOverride === undefined ? focoTelephoneByDate(focoValues) : null;
+  const inbound = new Set(), answered = new Set(), mixed = new Set(), eligible = new Set(), tests = new Set();
+  const successfulCallbacks = new Set(), failedCallbacks = new Set();
   for (const row of interactionsValues.slice(1)) {
     const id = normalize(cell(row, i['ID de conversa']));
     if (!id || normalize(cell(row, i['Tipo de mídia'])) !== 'voz') continue;
     const direction = normalize(cell(row, i['Direção']));
+    const ani = normalize(cell(row, i.ANI));
+    const conversation = hasConversation(cell(row, i['Total de conversas']));
+    if (ani.startsWith('sip:')) {
+      if (conversation) successfulCallbacks.add(id); else failedCallbacks.add(id);
+    }
     if (direction === 'entrada/saida') mixed.add(id);
+    // Elegibilidade é definida pela tabulação, em qualquer direção da interação de voz.
+    if (eligibleFinalizations.has(normalize(cell(row, i.Finalização)))) eligible.add(id);
     if (direction !== 'entrada') continue;
     inbound.add(id);
-    if (externalMark >= 0) {
-      const mark = normalize(cell(row, externalMark));
-      if (mark) {
-        if (!marksByConversation.has(id)) marksByConversation.set(id, new Set());
-        marksByConversation.get(id).add(mark);
-      }
-    }
-    if (cell(row, i['Usuários']) && hasConversation(cell(row, i['Total de conversas']))) {
-      answered.add(id);
-    }
+    const finalization = normalize(cell(row, i.Finalização));
+    if (finalization.includes('teste de atendimento') || finalization.includes('teste de ura')) tests.add(id);
+    if (cell(row, i.Usuários) && conversation) answered.add(id);
   }
-  const statuses = [...callbacks.values()];
-  const success = statuses.filter(status => status === 'sucesso').length;
-  const failed = statuses.filter(status => status === 'insucesso').length;
+  const success = successfulCallbacks.size;
+  const failed = [...failedCallbacks].filter(id => !successfulCallbacks.has(id)).length;
   const performed = success + failed;
   const rate = (value, total) => total ? value / total : null;
-  const finishedIds = new Set([...inbound].filter(id => !callbacks.has(id) || callbacks.get(id) === 'sucesso'));
-  const registered = protocols && externalMark >= 0
-    ? [...finishedIds].filter(id => [...(marksByConversation.get(id) || [])].some(mark => protocols.has(mark))).length
-    : null;
-  return {
-    received: inbound.size,
-    // This export has no ACD acceptance events. Never substitute agent count for Answered.
-    answered: null,
-    unique: answered.size,
-    finished: finishedIds.size,
-    eligible: callbacks.size,
-    performed, success, failed,
-    pending: callbacks.size - performed,
-    performedRate: rate(performed, callbacks.size),
-    successRate: rate(success, performed),
-    failedRate: rate(failed, performed),
-    potential: finishedIds.size,
-    registered,
-    registeredRate: registered === null ? null : rate(registered, finishedIds.size),
-    mixed: mixed.size,
-  };
+  const nonEligible = [...inbound].filter(id => !eligible.has(id));
+  const finished = nonEligible.length + success;
+  const testsInFinished = [...tests].filter(id => nonEligible.includes(id)).length;
+  const potential = Math.max(finished - testsInFinished - failed, 0);
+  const registered = registeredOverride === undefined ? (focoByDate ? [...focoByDate.values()].reduce((sum, count) => sum + count, 0) : null) : registeredOverride;
+  return { received: inbound.size, answered: null, unique: answered.size, finished, eligible: eligible.size, performed, success, failed, pending: Math.max(eligible.size - performed, 0), performedRate: rate(performed, eligible.size), successRate: rate(success, performed), failedRate: rate(failed, performed), potential, registered, registeredRate: registered === null ? null : rate(registered, potential), mixed: mixed.size };
 }
 
 function dayKey(value) {
   const raw = String(value ?? '').trim();
-  const br = /^(\d{1,2})\/(\d{1,2})\/(\d{4}|\d{2})(?:\s|$)/.exec(raw);
-  const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s]|$)/.exec(raw);
+  const br = /^(\d{1,2})\/(\d{1,2})\/(\d{4}|\d{2})(?:\s|$)/.exec(raw), iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s]|$)/.exec(raw);
   if (!br && !iso) return 'Sem data';
   let [year, month, day] = br ? [Number(br[3]), Number(br[2]), Number(br[1])] : [Number(iso[1]), Number(iso[2]), Number(iso[3])];
   if (year < 100) year += 2000;
   const date = new Date(Date.UTC(year, month - 1, day));
-  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return 'Sem data';
-  return date.toISOString().slice(0, 10);
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date.toISOString().slice(0, 10) : 'Sem data';
 }
 
-export function callbackReport(interactions, callbacks, foco = []) {
+export function callbackReport(interactions, callbacks = [], foco = []) {
   const i = columns(interactions, ['Data', 'ID de conversa']);
-  const c = columns(callbacks, ['Data da chamada', 'ID da chamada original']);
-  const buckets = new Map();
-  const group = (values, dateIndex, idIndex, kind) => {
-    const seen = new Map();
-    for (const row of values.slice(1)) {
-      const id = normalize(cell(row, idIndex));
-      if (!id) continue;
-      const date = dayKey(cell(row, dateIndex));
-      if (seen.has(id) && seen.get(id) !== date) throw invalid('Há datas diferentes para o mesmo ID de conversa. Revise a base antes da apuração diária.');
-      seen.set(id, date);
-      if (!buckets.has(date)) buckets.set(date, { interactions: [interactions[0]], callbacks: [callbacks[0]] });
-      buckets.get(date)[kind].push(row);
-    }
-  };
-  group(interactions, i.Data, i['ID de conversa'], 'interactions');
-  group(callbacks, c['Data da chamada'], c['ID da chamada original'], 'callbacks');
-  return {
-    metrics: callbackMetrics(interactions, callbacks, foco),
-    rows: [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => ({
-      date, ...callbackMetrics(values.interactions, values.callbacks, foco),
-    })),
-  };
+  const buckets = new Map(), seen = new Map(), focoByDate = focoTelephoneByDate(foco);
+  for (const row of interactions.slice(1)) {
+    const id = normalize(cell(row, i['ID de conversa'])); if (!id) continue;
+    const date = dayKey(cell(row, i.Data));
+    if (seen.has(id) && seen.get(id) !== date) throw invalid('Há datas diferentes para o mesmo ID de conversa. Revise a base antes da apuração diária.');
+    seen.set(id, date); if (!buckets.has(date)) buckets.set(date, []); buckets.get(date).push(row);
+  }
+  if (focoByDate) for (const date of focoByDate.keys()) if (!buckets.has(date)) buckets.set(date, []);
+  const registeredTotal = focoByDate ? [...focoByDate.values()].reduce((sum, count) => sum + count, 0) : null;
+  return { metrics: callbackMetrics(interactions, callbacks, foco, registeredTotal), rows: [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, rows]) => ({ date, ...callbackMetrics([interactions[0], ...rows], callbacks, foco, focoByDate ? focoByDate.get(date) || 0 : null) })) };
 }
