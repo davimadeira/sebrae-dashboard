@@ -7,8 +7,8 @@ const number = value => typeof value === 'number' ? value.toLocaleString('pt-BR'
 const percent = value => typeof value === 'number' ? (value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%' : '—';
 const emptyFilters = () => ({ start: '', end: '' });
 const columns = [
-  ['Atendidas', 'received', 'Voz de entrada; mistos separados', 'volume'],
-  ['Atendidas únicas', 'unique', 'IDs de entrada com operador e conversa positiva', 'volume'],
+  ['Ofertadas', 'received', 'Voz de entrada; mistos separados', 'volume'],
+  ['Ofertadas únicas', 'unique', 'IDs de entrada com operador e conversa positiva', 'volume'],
   ['Finalizadas', 'finished', 'Interações sem necessidade de callback + callbacks com sucesso, por ID original', 'volume'],
   ['Elegíveis para callback', 'eligible', 'Interações de voz com uma das tabulações elegíveis', 'return'],
   ['Callback realizado', 'performed', 'Interações cujo ANI começa com sip:', 'return'],
@@ -85,8 +85,8 @@ export default function CallbackPanel({ user }) {
       <div className="callback-notice"><AlertCircle size={15}/><p><strong>—</strong> indica definição ou fonte pendente. Sucesso significa conversa com o cliente, não comprova atendimento concluído. <a href="https://docs.google.com/spreadsheets/d/1Egx88GkeZ9ZHQrijClJEXIEDlQBy-ImuW_G92uR65R4/edit" target="_blank" rel="noreferrer" className="underline">Abrir planilha</a></p></div>
     </>}
     <details className="bko-panel callback-section"><summary>Como os indicadores são calculados</summary><ul>
-      <li>Atendidas: nome de exibição do volume de IDs distintos de voz com direção Entrada. Entrada/Saída fica separado enquanto seu tratamento nesse total é validado.</li>
-      <li>Atendidas únicas: IDs distintos de voz e direção Entrada, com operador e Total de conversas maior que zero. Vários operadores na mesma conversa não multiplicam o indicador.</li>
+      <li>Ofertadas: volume de IDs distintos de voz com direção Entrada. Entrada/Saída fica separado enquanto seu tratamento nesse total é validado.</li>
+      <li>Ofertadas únicas: IDs distintos de voz e direção Entrada, com operador e Total de conversas maior que zero. Vários operadores na mesma conversa não multiplicam o indicador.</li>
       <li>Finalizadas: interações de entrada que não são elegíveis, somadas aos callbacks SIP com sucesso. Callbacks sem sucesso não entram nesse total.</li>
       <li>Elegíveis: interações de voz com as tabulações Queda de ligação, Ligação muda, Erro sistêmico ou Falta de interação, independentemente da direção.</li>
       <li>Callback realizado: interação cujo ANI começa com <strong>sip:</strong>. Não há vínculo por telefone, operador ou limite de horário.</li>
