@@ -10,7 +10,7 @@ const columns = [
   ['Recebidas', 'received', 'Oferta da fila SAC nos arquivos diários, sem Ouvidoria', 'volume'],
   ['Atendidas únicas', 'unique', 'Atendidas Únicas = ID do atendimento', 'volume'],
   ['Finalizadas', 'finished', 'Finalizadas = Atendidas Únicas - Elegíveis para callback', 'volume'],
-  ['Elegíveis para callback', 'eligible', 'Elegíveis para Callback = Erro sistêmico/Ligações mudas/Falta de interação/Queda de ligação', 'return'],
+  ['Elegíveis para callback', 'eligible', 'Elegíveis para Callback = Erro sistêmico/LIGACAO MUDA/Falta de interação/Queda de ligação', 'return'],
   ['Callback realizado', 'performed', 'Interações cujo ANI começa com sip:', 'return'],
   ['% realizado', 'performedRate', 'Realizados ÷ elegíveis', 'return'],
   ['Callback com sucesso', 'success', 'Callback SIP com Total de conversas maior que zero', 'return'],
