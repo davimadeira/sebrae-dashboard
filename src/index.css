@@ -524,6 +524,12 @@ table tbody td {
 .callback-connection-dot{width:6px;height:6px;border-radius:50%;background:#94a3b8}.callback-connection-dot.is-connected{background:#20a881}
 .callback-heading-actions{display:flex;align-items:center;gap:10px}
 .callback-heading-actions .callback-refresh{min-height:34px;border-radius:7px;background:#edf5fc;border-color:#d7e6f3;color:#245779;padding:7px 12px}
+.callback-column-label{display:inline-flex!important;align-items:center;justify-content:center;gap:4px;position:relative}
+.callback-info{display:inline-grid;place-items:center;position:relative;width:16px;height:16px;border-radius:50%;color:#39708e;cursor:help;outline:none;flex:none}
+.callback-info:hover,.callback-info:focus-visible{background:#d7e8f2;color:#174e70}
+.callback-info [role="tooltip"]{display:none;position:absolute;z-index:20;left:50%;top:calc(100% + 7px);transform:translateX(-50%);width:220px;padding:9px 11px;border-radius:7px;background:#173f5c;color:#fff;font-size:10px;font-weight:500;line-height:1.45;text-align:left;white-space:normal;box-shadow:0 8px 22px #102c4050}
+.callback-info:hover [role="tooltip"],.callback-info:focus-visible [role="tooltip"]{display:block}
+.dark .callback-info{color:#9bcde5}.dark .callback-info:hover,.dark .callback-info:focus-visible{background:#29455b;color:#d8f0fa}
 /* Shared horizontal navigation for every dashboard section. */
 .bko-workspace{padding-left:20px;padding-right:20px}
 .bko-workspace .bko-sidebar{position:static;width:auto;flex-direction:row;flex-wrap:wrap;margin-bottom:8px}

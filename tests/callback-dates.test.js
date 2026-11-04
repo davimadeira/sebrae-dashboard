@@ -23,17 +23,19 @@ const foco = [
   ['08/10/2026', 'Telefone', 'Concluído', 'outro-protocolo', ''],
   ['08/10/2026', 'Telefone', 'Concluído', '', ''],
 ];
+const received = new Map([['2026-09-01', 10], ['2026-09-02', 20], ['2026-10-08', 30], ['Sem data', 0]]);
 test('agrupa pelo dia da origem, mantém datas inválidas visíveis e reconcilia total', () => {
-  const report = callbackReport(interactions, callbacks, foco);
+  const report = callbackReport(interactions, callbacks, foco, received);
   assert.deepEqual(report.rows.map(row => row.date), ['2026-09-01', '2026-09-02', '2026-10-08', 'Sem data']);
   assert.equal(report.rows[0].success, 0);
   assert.equal(report.rows[1].success, 0);
-  assert.deepEqual(report.rows.map(row => row.finished), [1, 0, 1, 1]);
+  assert.deepEqual(report.rows.map(row => row.received), [10, 20, 30, 0]);
+  assert.deepEqual(report.rows.map(row => row.finished), [1, 0, 0, 1]);
   assert.deepEqual(report.rows.map(row => row.registered), [1, 0, 3, 0]);
   assert.deepEqual(summarizeCallbackRows(report.rows), report.metrics);
 });
 test('combina filtros de mês, semana e dia e recalcula percentuais pelos totais', () => {
-  const { rows } = callbackReport(interactions, callbacks, foco);
+  const { rows } = callbackReport(interactions, callbacks, foco, received);
   const september = filterCallbackRows(rows, { meses: ['09/2026'] });
   assert.equal(september.length, 2);
   assert.equal(summarizeCallbackRows(september).performedRate, 0);

@@ -19,36 +19,40 @@ test('usa a tabulação para elegíveis e ANI sip para callbacks', () => {
   assert.equal(metrics.success, 1);
   assert.equal(metrics.failed, 2);
   assert.equal(metrics.pending, 0);
-  assert.equal(metrics.finished, 2); // one non-eligible inbound plus one successful callback
-  assert.equal(metrics.potential, 0); // finalizadas menos callbacks SIP sem sucesso
+  assert.equal(metrics.unique, 3);
+  assert.equal(metrics.finished, 1); // atendidas únicas menos elegíveis
+  assert.equal(metrics.potential, 2); // finalizadas mais callbacks com sucesso
+  assert.equal(metrics.received, null); // recebidas vêm dos arquivos diários do Drive
   assert.equal(metrics.successRate, 1 / 3);
 });
 
-test('retira Teste de atendimento do potencial de registros', () => {
+test('potencial soma finalizadas e callbacks com sucesso', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '00:01:00', 't1', 'Ana', 'voz', 'Teste de atendimento', 'tel:+55'],
     ['Entrada', '00:01:00', 'n1', 'Ana', 'voz', 'Atendimento concluído', 'tel:+55'],
   ]);
   assert.equal(metrics.finished, 2);
-  assert.equal(metrics.potential, 1);
+  assert.equal(metrics.potential, 2);
 });
 
-test('aceita todas as tabulações elegíveis e separa Entrada/Saída', () => {
+test('aceita todas as tabulações elegíveis apenas na entrada e separa Entrada/Saída', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '', 'a', '', 'voz', 'Ligação muda', 'tel:+55'],
     ['Entrada', '', 'b', '', 'voz', 'Ligação muda/caída', 'tel:+55'],
     ['Entrada', '', 'c', '', 'voz', 'Falta de interação', 'tel:+55'],
     ['Entrada/Saída', '00:01:00', 'd', 'Ana', 'voz', 'Queda de ligação', 'sip:callback'],
   ]);
-  assert.equal(metrics.eligible, 4);
+  assert.equal(metrics.eligible, 3);
   assert.equal(metrics.mixed, 1);
   assert.equal(metrics.performed, 1);
   assert.equal(metrics.success, 1);
+  assert.equal(metrics.finished, 0);
+  assert.equal(metrics.potential, 1);
 });
 
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
   const metrics = callbackMetrics([headers]);
-  assert.equal(metrics.received, 0);
+  assert.equal(metrics.received, null);
   assert.equal(metrics.finished, 0);
   assert.equal(metrics.performedRate, null);
   assert.equal(metrics.successRate, null);

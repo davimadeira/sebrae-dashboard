@@ -25,11 +25,12 @@ test('retorna apenas métricas agregadas, sem dados pessoais das linhas', async 
   const handler = createHandler(async () => {}, async () => 'token', async () => ({ ok: true, json: async () => ({ valueRanges: [
     { range: "'Interações'!A1:N2", values: [['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Total de conversas', 'Data', 'Finalização', 'ANI'], ['private-id', 'voz', 'Entrada', 'Pessoa', '00:01:00', '01/09/26 12:00', '', 'tel:+55']] },
     { range: "'Callbacks'!A1:M1", values: [['ID da chamada original', 'Status do callback', 'Data da chamada']] },
-  ] }) }));
+  ] }) }), async () => new Map([['2026-09-01', 12]]));
   const response = res();
   await handler({ method: 'GET' }, response);
   assert.equal(response.code, 200);
-  assert.equal(response.body.metrics.received, 1);
+  assert.equal(response.body.metrics.received, 12);
+  assert.equal(response.body.metrics.unique, 1);
   assert.equal(response.body.rows[0].date, '2026-09-01');
   assert.equal(response.headers['Cache-Control'], 'no-store');
   assert.doesNotMatch(JSON.stringify(response.body), /private-id|Pessoa/);

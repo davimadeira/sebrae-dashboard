@@ -26,7 +26,7 @@ const getExternalAccountClient = config => {
   const audience = `//iam.googleapis.com/projects/${config.GCP_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${config.GCP_WORKLOAD_IDENTITY_POOL_ID}/providers/${config.GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID}`;
   externalAccountClient = ExternalAccountClient.fromJSON({
     type: 'external_account',
-    scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets'],
+    scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.readonly'],
     audience,
     subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
     token_url: 'https://sts.googleapis.com/v1/token',

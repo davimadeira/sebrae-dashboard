@@ -1,18 +1,22 @@
 import { callbackReport } from './_callbackMetrics.js';
+import { loadReceivedFromDrive } from './_receivedMetrics.js';
 
 const spreadsheetId = '1Egx88GkeZ9ZHQrijClJEXIEDlQBy-ImuW_G92uR65R4';
 const authorize = async req => (await import('./_firebaseAdmin.js')).requireUser(req);
 const accessToken = async () => (await import('./_firebaseAdmin.js')).getSheetsAccessToken();
 const base = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
 
-export const createHandler = (auth = authorize, token = accessToken, request = fetch) => async (req, res) => {
+export const createHandler = (auth = authorize, token = accessToken, request = fetch, receivedLoader = loadReceivedFromDrive) => async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') return res.status(405).json({ error: 'Método não permitido.' });
   try {
     await auth(req);
     const bearer = await token();
     const options = { headers: { Authorization: `Bearer ${bearer}` }, signal: AbortSignal.timeout(20000) };
-    const response = await request(`${base}/values:batchGet?ranges=${encodeURIComponent("'Interações'!A:ZZ")}&ranges=${encodeURIComponent("'Callbacks'!A:ZZ")}&valueRenderOption=FORMATTED_VALUE`, options);
+    const [response, receivedByDate] = await Promise.all([
+      request(`${base}/values:batchGet?ranges=${encodeURIComponent("'Interações'!A:ZZ")}&ranges=${encodeURIComponent("'Callbacks'!A:ZZ")}&valueRenderOption=FORMATTED_VALUE`, options),
+      receivedLoader(bearer, request),
+    ]);
     if (!response.ok) {
       const account = process.env.GCP_SERVICE_ACCOUNT_EMAIL || 'a conta de serviço do dashboard';
       const error = [403, 404].includes(response.status)
@@ -30,7 +34,7 @@ export const createHandler = (auth = authorize, token = accessToken, request = f
     } catch {
       // Foco is optional while its import automation is being configured.
     }
-    const report = callbackReport(interactions, callbacks, foco);
+    const report = callbackReport(interactions, callbacks, foco, receivedByDate);
     return res.status(200).json({ ...report, updatedAt: new Date().toISOString(), source: { spreadsheetId, tabs: ['Interações', 'Callbacks', ...(foco.length ? ['Foco'] : [])] } });
   } catch (error) {
     return res.status(error.statusCode || 503).json({ error: error.statusCode ? error.message : 'Não foi possível carregar os dados de Callback.' });
