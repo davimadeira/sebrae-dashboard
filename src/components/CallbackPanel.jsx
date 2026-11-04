@@ -8,7 +8,7 @@ const percent = value => typeof value === 'number' ? (value * 100).toLocaleStrin
 const emptyFilters = () => ({ start: '', end: '' });
 const columns = [
   ['Ofertadas', 'received', 'Voz de entrada; mistos separados', 'volume'],
-  ['Ofertadas únicas', 'unique', 'IDs de entrada com operador e conversa positiva', 'volume'],
+  ['Atendidas únicas', 'unique', 'IDs de entrada com operador e conversa positiva', 'volume'],
   ['Finalizadas', 'finished', 'Interações sem necessidade de callback + callbacks com sucesso, por ID original', 'volume'],
   ['Elegíveis para callback', 'eligible', 'Interações de voz com uma das tabulações elegíveis', 'return'],
   ['Callback realizado', 'performed', 'Interações cujo ANI começa com sip:', 'return'],
@@ -86,7 +86,7 @@ export default function CallbackPanel({ user }) {
     </>}
     <details className="bko-panel callback-section"><summary>Como os indicadores são calculados</summary><ul>
       <li>Ofertadas: volume de IDs distintos de voz com direção Entrada. Entrada/Saída fica separado enquanto seu tratamento nesse total é validado.</li>
-      <li>Ofertadas únicas: IDs distintos de voz e direção Entrada, com operador e Total de conversas maior que zero. Vários operadores na mesma conversa não multiplicam o indicador.</li>
+      <li>Atendidas únicas: IDs distintos de voz e direção Entrada, com operador e Total de conversas maior que zero. Vários operadores na mesma conversa não multiplicam o indicador.</li>
       <li>Finalizadas: interações de entrada que não são elegíveis, somadas aos callbacks SIP com sucesso. Callbacks sem sucesso não entram nesse total.</li>
       <li>Elegíveis: interações de voz com as tabulações Queda de ligação, Ligação muda, Erro sistêmico ou Falta de interação, independentemente da direção.</li>
       <li>Callback realizado: interação cujo ANI começa com <strong>sip:</strong>. Não há vínculo por telefone, operador ou limite de horário.</li>
