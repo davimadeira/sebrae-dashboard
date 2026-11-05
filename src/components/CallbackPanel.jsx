@@ -10,7 +10,7 @@ const columns = [
   ['Recebidas', 'received', 'Oferta da fila SAC nos arquivos diários, sem Ouvidoria', 'volume'],
   ['Atendidas únicas', 'unique', 'Atendidas Únicas = ID do atendimento', 'volume'],
   ['Finalizadas', 'finished', 'Finalizadas = Atendidas Únicas - Elegíveis para callback', 'volume'],
-  ['Elegíveis para callback', 'eligible', 'Elegíveis para Callback = Erro sistêmico/LIGACAO MUDA/Falta de interação/Queda de ligação', 'return'],
+  ['Elegíveis para callback', 'eligible', 'Direção Entrada e Finalização contendo: Erro sistêmico/LIGACAO MUDA/Falta de interação/Queda de ligação', 'return'],
   ['Callback realizado', 'performed', 'Interações cujo ANI começa com sip:', 'return'],
   ['% realizado', 'performedRate', 'Realizados ÷ elegíveis', 'return'],
   ['Callback com sucesso', 'success', 'Callback SIP com Total de conversas maior que zero', 'return'],
@@ -90,7 +90,7 @@ export default function CallbackPanel({ user }) {
       <li>Recebidas: valor da coluna Oferta nos arquivos diários da pasta de recebidas, considerando a fila SAC e desconsiderando a linha de Ouvidoria.</li>
       <li>Atendidas únicas: IDs distintos de atendimento de voz com direção Entrada.</li>
       <li>Finalizadas: Atendidas únicas menos Elegíveis para callback.</li>
-      <li>Elegíveis: interações de voz com as tabulações Queda de ligação, Ligação muda, Erro sistêmico ou Falta de interação, independentemente da direção.</li>
+      <li>Elegíveis: IDs distintos de voz com direção Entrada e Finalização contendo Queda de ligação, LIGACAO MUDA, Erro sistêmico ou Falta de interação. A tabulação pode aparecer junto de outros textos e pode estar sem acentos.</li>
       <li>Callback realizado: interação cujo ANI começa com <strong>sip:</strong>. Não há vínculo por telefone, operador ou limite de horário.</li>
       <li>Sucesso: callback SIP com Total de conversas maior que zero. Sem sucesso: callback SIP com Total de conversas vazio ou zero.</li>
       <li>Callback não realizado é a diferença entre elegíveis e realizados, sem resultado negativo quando houver mais callbacks SIP do que elegíveis.</li>

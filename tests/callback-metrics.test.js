@@ -50,6 +50,20 @@ test('aceita todas as tabulações elegíveis apenas na entrada e separa Entrada
   assert.equal(metrics.potential, 1);
 });
 
+test('reconhece tabulação elegível dentro de finalizações compostas e sem acentos', () => {
+  const metrics = callbackMetrics([headers,
+    ['Entrada', '', 'a', '', 'voz', 'Portal sebrae;erro sistemico', 'tel:+55'],
+    ['Entrada', '', 'b', '', 'voz', 'Outro;FALTA DE INTERACAO', 'tel:+55'],
+    ['Entrada', '', 'c', '', 'voz', 'Ligação muda/caída;Portal', 'tel:+55'],
+    ['Entrada', '', 'd', '', 'voz', 'Portal;queda de ligacao', 'tel:+55'],
+    ['Saída', '', 'e', '', 'voz', 'Portal;erro sistêmico', 'tel:+55'],
+    ['Entrada', '', 'f', '', 'chat', 'Erro sistêmico', 'tel:+55'],
+  ]);
+  assert.equal(metrics.eligible, 4);
+  assert.equal(metrics.unique, 4);
+  assert.equal(metrics.finished, 0);
+});
+
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
   const metrics = callbackMetrics([headers]);
   assert.equal(metrics.received, null);

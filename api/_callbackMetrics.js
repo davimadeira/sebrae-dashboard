@@ -3,7 +3,12 @@ const headerKey = value => normalize(value).replace(/[^a-z0-9]/g, '');
 const cell = (row, index) => String(row[index] ?? '').trim();
 const invalid = message => Object.assign(new Error(message), { statusCode: 409 });
 
-const eligibleFinalizations = new Set(['erro sistemico', 'queda de ligacao', 'ligacao muda', 'ligacao muda/caida', 'falta de interacao']);
+const eligibleFinalizations = ['erro sistemico', 'queda de ligacao', 'ligacao muda', 'falta de interacao'];
+
+function isEligibleFinalization(value) {
+  const finalization = normalize(value);
+  return eligibleFinalizations.some(eligible => finalization.includes(eligible));
+}
 
 function hasConversation(value) {
   const duration = String(value ?? '').trim().replace(',', '.');
@@ -59,7 +64,7 @@ export function callbackMetrics(interactionsValues = [], _callbacksValues = [], 
     if (direction === 'entrada/saida') mixed.add(id);
     if (direction !== 'entrada') continue;
     inbound.add(id);
-    if (eligibleFinalizations.has(normalize(cell(row, i.Finalização)))) eligible.add(id);
+    if (isEligibleFinalization(cell(row, i.Finalização))) eligible.add(id);
   }
   const success = successfulCallbacks.size;
   const failed = [...failedCallbacks].filter(id => !successfulCallbacks.has(id)).length;
