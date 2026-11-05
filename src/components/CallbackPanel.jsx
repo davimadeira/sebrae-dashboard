@@ -17,7 +17,7 @@ const columns = [
   ['% com sucesso', 'successRate', 'Sucesso ÷ realizados', 'return'],
   ['Callback sem sucesso', 'failed', 'ID elegível com tentativa vinculada e nenhuma conversa', 'return'],
   ['% sem sucesso', 'failedRate', 'Sem sucesso ÷ realizados', 'return'],
-  ['Callback não realizado', 'pending', 'Elegíveis menos callbacks SIP realizados', 'return'],
+  ['Callback não realizado', 'pending', 'Elegíveis menos callbacks realizados', 'return'],
   ['Potencial de registros', 'potential', 'Potencial de Registro = Finalizadas + Callback com sucesso', 'focus'],
   ['Registro no Foco', 'registered', 'Registros de telefonia na aba Foco, pela data de abertura', 'focus'],
   ['% registro no Foco', 'registeredRate', 'Registros no Foco ÷ potencial de registros', 'focus'],

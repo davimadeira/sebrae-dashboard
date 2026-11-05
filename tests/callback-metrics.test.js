@@ -86,6 +86,22 @@ test('conta cada ID original elegível uma vez e ignora resultados de não eleg�
   assert.equal(metrics.failed, 1);
 });
 
+test('exige tentativa para realizado e conversa para sucesso, mesmo com status divergente', () => {
+  const metrics = callbackMetrics([headers,
+    ['Entrada', '', 'a', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
+    ['Entrada', '', 'b', 'Bia', 'voz', 'Ligação muda', 'tel:200', 'tel:901'],
+    ['Entrada', '', 'c', 'Caio', 'voz', 'Queda de ligação', 'tel:300', 'tel:902'],
+  ], [callbackHeaders,
+    ['a', 'Sucesso', '0', '0'],
+    ['b', 'Sucesso', '1', '0'],
+    ['c', 'Insucesso', '2', '1'],
+  ]);
+  assert.equal(metrics.performed, 2);
+  assert.equal(metrics.success, 1);
+  assert.equal(metrics.failed, 1);
+  assert.equal(metrics.pending, 1);
+});
+
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
   const metrics = callbackMetrics([headers], noCallbacks);
   assert.equal(metrics.received, null);

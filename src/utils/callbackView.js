@@ -18,9 +18,8 @@ export function summarizeCallbackRows(rows) {
   total.received = rows.length && rows.every(row => typeof row.received === 'number')
     ? rows.reduce((sum, row) => sum + row.received, 0)
     : null;
-  // SIP callbacks are counted on the day they happen while eligibility is
-  // counted on the original inbound day. Recalculate the filtered total so
-  // daily zero floors do not hide pending callbacks across a date range.
+  // Recalculate the filtered total from eligible original IDs and their
+  // linked results so the period follows the same formula as each day.
   total.pending = Math.max(total.eligible - total.performed, 0);
   const registered = rows.length && rows.every(row => typeof row.registered === 'number')
     ? rows.reduce((sum, row) => sum + row.registered, 0)

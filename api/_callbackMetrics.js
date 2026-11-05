@@ -23,17 +23,16 @@ function numeric(value) {
 }
 
 function callbackResults(values, eligible) {
-  const c = columns(values, ['ID da chamada original', 'Status do callback', 'Quantidade de tentativas', 'Tentativas com conversa'], 'Callbacks');
+  const c = columns(values, ['ID da chamada original', 'Quantidade de tentativas', 'Tentativas com conversa'], 'Callbacks');
   const performed = new Set(), success = new Set();
   for (const row of values.slice(1)) {
     const id = normalize(cell(row, c['ID da chamada original']));
     if (!id || !eligible.has(id)) continue;
-    const status = normalize(cell(row, c['Status do callback']));
     const attempts = numeric(cell(row, c['Quantidade de tentativas']));
     const conversations = numeric(cell(row, c['Tentativas com conversa']));
-    if (attempts <= 0 && status !== 'sucesso' && status !== 'insucesso') continue;
+    if (attempts <= 0) continue;
     performed.add(id);
-    if (conversations > 0 || status === 'sucesso') success.add(id);
+    if (conversations > 0) success.add(id);
   }
   return { performed: performed.size, success: success.size, failed: performed.size - success.size };
 }

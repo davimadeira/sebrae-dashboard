@@ -1,5 +1,5 @@
 import { columnName, quotedTab, sheetError } from './_sheetRows.js';
-import { identityIndexes, normalizedHeader } from '../src/utils/npsSchema.js';
+import { identityIndexes, deadlineIndex } from '../src/utils/npsSchema.js';
 export function validationRange(value) {
   const range = String(value || '').replace(/^=/, '').trim();
   if (!range || /#REF!/i.test(range)) return null;
@@ -32,7 +32,7 @@ export async function npsFields(root, headers, columns, request, records, formul
       options = result.values || []; optionsError = result.error || '';
     }
     if (!condition && /status|perfil|forma de contato|canal|operador|sucesso|respondido|encaminhamento/i.test(name)) options = [...new Set(records.map(r => r.values[index]).filter(Boolean))].slice(0, 100);
-    const calculated = index === date || normalizedHeader(name) === 'prazofinal' && formulas.some(row => String(row[index] || '').startsWith('='));
-    return { name, options: [...new Set(options.map(String).filter(Boolean))], ...(optionsError ? { optionsError } : {}), strict: validation?.strict === true && ['ONE_OF_LIST', 'ONE_OF_RANGE'].includes(condition?.type), type: calculated ? 'calculated' : /^data|prazo/i.test(name) ? 'date' : /coment|descri|detalha|conclusão do retorno/i.test(name) ? 'textarea' : 'text' };
+    const calculated = index === date || index === deadlineIndex(columns) && formulas.some(row => String(row[index] || '').startsWith('='));
+    return { name, options: [...new Set(options.map(String).filter(Boolean))], ...(optionsError ? { optionsError } : {}), strict: validation?.strict === true && ['ONE_OF_LIST', 'ONE_OF_RANGE'].includes(condition?.type), type: calculated ? 'calculated' : (index === deadlineIndex(columns) || /^data|prazo/i.test(name)) ? 'date' : /coment|descri|detalha|conclusão do retorno/i.test(name) ? 'textarea' : 'text' };
   }));
 }

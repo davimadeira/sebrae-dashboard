@@ -6,7 +6,33 @@ const now=Date.UTC(2026,9,5);
 test('datas inválidas e futuras não viram tempo em aberto',()=>{assert.equal(day('31/02/2026'),null);const a=analyze([make(2,{0:'06/10/2026',9:'Pendente'}),make(3,{0:'01/10/2026',9:'Pendente'})],defaults,now);assert.equal(a.averageAge,4);assert.equal(a.missingDates,1);});
 test('status usa correspondência exata e não confunde não concluído',()=>{const a=analyze([make(2,{9:'CONCLUÍDO'}),make(3,{9:'Não concluído'}),make(4,{9:'Em análise'})],defaults,now);assert.equal(a.closed,1);assert.equal(a.open.length,1);assert.equal(a.unknown,1);});
 test('tentativa exige status ou detalhes; sucesso final não é atribuído à tentativa',()=>{const a=analyze([make(2,{14:'Ana',18:'Sem sucesso',20:'Bruno',22:'Telefone não atende',26:'SIM'})],defaults,now);assert.equal(a.attempts[0].total,0);assert.equal(a.attempts[1].failure,1);assert.equal(a.attempts[2].unknown,1);assert.equal(a.attempts[2].success,0);assert.equal(a.success,1);assert.equal(a.rows[0].owner,'Bruno');});
-test('prioridade só inclui status abertos e preserva múltiplos sinais',()=>{const a=analyze([make(2,{0:'01/09/2026',9:'Concluído'}),make(3,{0:'01/09/2026',9:'Pendente',15:'Não',18:'Não',21:'Não'})],defaults,now);assert.equal(a.priorities.length,1);assert.equal(a.priorities[0].flags.length,3);});
+test('prioridade só inclui status abertos e preserva múltiplos sinais',()=>{const a=analyze([make(2,{0:'01/09/2026',9:'Concluído'}),make(3,{0:'01/09/2026',9:'Pendente',15:'Não atendido',18:'Não atendido',21:'Não atendido'})],defaults,now);assert.equal(a.priorities.length,1);assert.equal(a.priorities[0].flags.length,3);});
 test('CSV suporta BOM, vírgula, aspas, multiline e direções mistas sem duplicar ID',()=>{const csv='\ufeff"ID de conversa","Direção","Observação"\r\n"AbC","Entrada/Saída","linha\ncom ""aspas"""\r\n"AbC","Saída","x"\r\n"DEF","Entrada","x"';const s=parseInteractions(csv);assert.equal(s.total,3);assert.equal(s.map.size,2);assert.equal(s.callbacks,1);assert.equal(s.duplicates,1);const joined=joinInteractions([make(2,{6:'abc'}),make(3,{6:'não existe'})],s);assert.equal(joined[0].interaction.callback,true);assert.equal(joined[1].interaction,null);});
 test('CSV ponto e vírgula e validação de cabeçalhos',()=>{assert.equal(parseInteractions('ID de conversa;Direção\na;Saída').callbacks,1);assert.throws(()=>parseInteractions('Nome;Telefone\na;b'),/precisa conter/);assert.throws(()=>parseInteractions('ID de conversa,Direção\n"abc,Saída'),/aspas/);});
 test('base vazia não inventa médias ou registros',()=>{const a=analyze([],defaults,now);assert.equal(a.averageAge,null);assert.equal(a.rows.length,0);assert.equal(a.success,0);assert.equal(a.priorities.length,0);});
+
+test('categorias NPS não determinam a situação; último contato prevalece',()=>{
+ const a=analyze([make(2,{9:'Detratores',15:'Finalizado'}),make(3,{9:'Promotores',15:'Finalizado',18:'Retornar para cliente'}),make(4,{9:'Neutros',15:'Tratado'}),make(5,{9:'Neutros'})],defaults,now);
+ assert.equal(a.closed,2);assert.equal(a.open.length,2);assert.equal(a.unknown,0);
+ assert.equal(a.rows[3].operationalStatus,'Aguardando primeiro contato');
+});
+test('contato posterior desconhecido ou só detalhado não mantém conclusão anterior',()=>{
+ const a=analyze([make(2,{9:'Neutros',15:'Finalizado',18:'Outro'}),make(3,{9:'Neutros',15:'Finalizado',19:'Retorno combinado'})],defaults,now);
+ assert.equal(a.closed,0);assert.equal(a.unknown,2);
+});
+test('sucesso usa evidência estruturada, não presume que todo finalizado teve sucesso',()=>{
+ const a=analyze([make(2,{15:'Finalizado',16:'Ligação bem sucedida',26:'Relato livre'}),make(3,{15:'Finalizado',16:'Caixa Postal'}),make(4,{15:'Tratado',26:'Relato sobre curso sem sucesso no passado'}),make(5,{15:'Finalizado',16:'Ligação bem sucedida',26:'Sem sucesso'})],defaults,now);
+ assert.equal(a.success,1);assert.equal(a.failure,2);assert.equal(a.rows[2].result,'unknown');assert.equal(a.rows[0].resultSource,'1º contato (status/detalhamento)');
+});
+test('última tentativa é a origem e evidências contraditórias exigem revisão',()=>{
+ const a=analyze([make(2,{15:'Finalizado',16:'Ligação bem sucedida',18:'Não atendido',19:'Caixa Postal'}),make(3,{15:'Não atendido',16:'Ligação bem sucedida'})],defaults,now);
+ assert.equal(a.rows[0].result,'failure');assert.equal(a.rows[1].result,'unknown');
+});
+test('resposta por data ou indicador de e-mail não conclui a tratativa',()=>{
+ const a=analyze([make(2,{9:'Neutros',10:'01/10/2026',15:'Em acompanhamento'}),make(3,{9:'Detratores',13:'Sim'}),make(4,{9:'Promotores',10:'Sem resposta',13:'Não'})],defaults,now);
+ assert.equal(a.open.length,3);assert.deepEqual(a.rows.map(r=>r.responded),[true,true,false]);
+});
+test('encaminhamento reconhece opção real da planilha e último contato escalonado',()=>{
+ const a=analyze([make(2,{29:'Encaminhado para Ouvidoria'}),make(3,{15:'Escalonado'}),make(4,{29:'Não encaminhado para Ouvidoria'})],defaults,now);
+ assert.equal(a.n2.length,2);assert.equal(a.closed,0);
+});

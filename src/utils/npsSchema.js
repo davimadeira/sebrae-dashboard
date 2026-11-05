@@ -16,3 +16,11 @@ export function fieldGroups(headers) {
   if (extras.length) result.push({ title: 'Outras informações', indexes: extras });
   return result;
 }
+
+export function deadlineIndex(headers) {
+  for (const alias of ['prazofinal', 'dataprazofinal', 'datadoprazo', 'dataprazo', 'datadevencimento', 'vencimento', 'prazo']) {
+    const index = headers.findIndex(h => normalizedHeader(h) === alias);
+    if (index >= 0) return index;
+  }
+  return -1;
+}
