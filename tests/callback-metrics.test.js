@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { callbackMetrics } from '../api/_callbackMetrics.js';
 
 const headers = ['Direção', 'Total de conversas', 'ID de conversa', 'Usuários', 'Tipo de mídia', 'Finalização', 'ANI', 'DNIS'];
-const callbackHeaders = ['ID da chamada original', 'Status do callback', 'Quantidade de tentativas', 'Tentativas com conversa'];
+const callbackHeaders = ['ID da chamada original', 'Status do callback', 'Quantidade de tentativas', 'Tentativas com conversa', 'IDs dos retornos'];
 const noCallbacks = [callbackHeaders];
 
 test('usa a tabulação para elegíveis e os resultados vinculados da aba Callbacks', () => {
@@ -100,6 +100,20 @@ test('exige tentativa para realizado e conversa para sucesso, mesmo com status d
   assert.equal(metrics.success, 1);
   assert.equal(metrics.failed, 1);
   assert.equal(metrics.pending, 1);
+});
+
+test('retornos únicos removem repetição do mesmo cliente e operador no dia', () => {
+  const metrics = callbackMetrics([headers,
+    ['Entrada', '', 'e1', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
+    ['Saída', '', 'r1', 'Ana', 'voz', '', 'sip:ana', 'tel:+55 11 99999-0000'],
+    ['Saída', '', 'r2', 'Ana', 'voz', '', 'sip:ana', 'tel:5511999990000'],
+    ['Saída', '', 'r3', 'Bia', 'voz', '', 'sip:bia', 'tel:5511999990000'],
+    ['Saída', '', 'r4', 'Ana', 'voz', '', 'sip:ana', 'tel:5511888880000'],
+  ], [callbackHeaders,
+    ['e1', 'Sucesso', '4', '1', 'r1 | r2 | r3 | r4'],
+  ]);
+  assert.equal(metrics.performed, 1);
+  assert.equal(metrics.uniqueReturns, 3);
 });
 
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {

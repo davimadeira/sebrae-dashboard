@@ -11,9 +11,9 @@ const interactions = [
   ['d', 'voz', 'Entrada', 'Ana', '', '31/02/2026', 'p4', '', 'tel:+55', 'tel:103'],
 ];
 const callbacks = [
-  ['ID da chamada original', 'Status do callback', 'Data da chamada', 'Primeiro retorno', 'Quantidade de tentativas', 'Tentativas com conversa'],
-  ['a', 'Sucesso', '01/09/26 23:59', '02/09/26 00:10', '1', '1'],
-  ['b', 'Sem saída identificada', '02/09/2026 10:00', '', '0', '0'],
+  ['ID da chamada original', 'Status do callback', 'Data da chamada', 'Primeiro retorno', 'Quantidade de tentativas', 'Tentativas com conversa', 'IDs dos retornos'],
+  ['a', 'Sucesso', '01/09/26 23:59', '02/09/26 00:10', '1', '1', 'c'],
+  ['b', 'Sem saída identificada', '02/09/2026 10:00', '', '0', '0', ''],
 ];
 const foco = [
   ['Data de abertura', 'Canal de Atendimento', 'Status', 'Protocolo CNR', 'Interação Foco nº'],
@@ -54,15 +54,19 @@ test('conta cada origem elegível realizada uma vez na data da origem', () => {
   const values = [interactions[0],
     ['e1', 'voz', 'Entrada', 'Ana', '', '01/09/2026', '', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['e2', 'voz', 'Entrada', 'Bia', '', '02/09/2026', '', 'Ligação muda', 'tel:200', 'tel:900'],
+    ['r1', 'voz', 'Saída', 'Ana', '', '01/09/2026', '', '', 'sip:ana', 'tel:900'],
+    ['r2', 'voz', 'Saída', 'Ana', '', '02/09/2026', '', '', 'sip:ana', 'tel:900'],
   ];
   const results = [callbacks[0],
-    ['e1', 'Sucesso', '01/09/2026', '', '3', '1'],
-    ['e1', 'Sucesso', '01/09/2026', '', '3', '1'],
-    ['e2', 'Insucesso', '02/09/2026', '', '2', '0'],
+    ['e1', 'Sucesso', '01/09/2026', '', '3', '1', 'r1'],
+    ['e1', 'Sucesso', '01/09/2026', '', '3', '1', 'r1'],
+    ['e2', 'Insucesso', '02/09/2026', '', '2', '0', 'r2'],
   ];
   const report = callbackReport(values, results);
   assert.deepEqual(report.rows.map(row => row.performed), [1, 1]);
+  assert.deepEqual(report.rows.map(row => row.uniqueReturns), [1, 1]);
   assert.equal(report.metrics.performed, 2);
+  assert.equal(report.metrics.uniqueReturns, 2);
   assert.equal(report.metrics.success, 1);
   assert.equal(report.metrics.failed, 1);
   assert.deepEqual(summarizeCallbackRows(report.rows), report.metrics);

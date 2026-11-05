@@ -22,9 +22,19 @@ function numeric(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function callbackResults(values, eligible) {
-  const c = columns(values, ['ID da chamada original', 'Quantidade de tentativas', 'Tentativas com conversa'], 'Callbacks');
-  const performed = new Set(), success = new Set();
+function returnIndex(values) {
+  const c = columns(values, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'ANI', 'DNIS']);
+  return new Map(values.slice(1).map(row => [normalize(cell(row, c['ID de conversa'])), { row, c }]));
+}
+
+function customerKey(value) {
+  const normalized = normalize(value).replace(/^tel:/, '');
+  return normalized.replace(/\D/g, '') || normalized;
+}
+
+function callbackResults(values, eligible, returns) {
+  const c = columns(values, ['ID da chamada original', 'Quantidade de tentativas', 'Tentativas com conversa', 'IDs dos retornos'], 'Callbacks');
+  const performed = new Set(), success = new Set(), uniqueReturns = new Set();
   for (const row of values.slice(1)) {
     const id = normalize(cell(row, c['ID da chamada original']));
     if (!id || !eligible.has(id)) continue;
@@ -33,8 +43,18 @@ function callbackResults(values, eligible) {
     if (attempts <= 0) continue;
     performed.add(id);
     if (conversations > 0) success.add(id);
+    for (const returnId of cell(row, c['IDs dos retornos']).split(/\s*\|\s*/).map(normalize).filter(Boolean)) {
+      const found = returns.get(returnId); if (!found) continue;
+      const { row: returned, c: r } = found;
+      const direction = normalize(cell(returned, r['Direção']));
+      const operator = normalize(cell(returned, r['Usuários']));
+      const customer = customerKey(cell(returned, r.DNIS));
+      if (normalize(cell(returned, r['Tipo de mídia'])) !== 'voz' || !['saida', 'entrada/saida'].includes(direction)) continue;
+      if (!normalize(cell(returned, r.ANI)).startsWith('sip:') || !operator || !customer) continue;
+      uniqueReturns.add(`${operator}\u0000${customer}`);
+    }
   }
-  return { performed: performed.size, success: success.size, failed: performed.size - success.size };
+  return { performed: performed.size, success: success.size, failed: performed.size - success.size, uniqueReturns: uniqueReturns.size };
 }
 
 function focoTelephoneByDate(values) {
@@ -59,7 +79,7 @@ function focoTelephoneByDate(values) {
   return result;
 }
 
-export function callbackMetrics(interactionsValues = [], callbacksValues = [], focoValues = [], registeredOverride, receivedOverride) {
+export function callbackMetrics(interactionsValues = [], callbacksValues = [], focoValues = [], registeredOverride, receivedOverride, returnSource = interactionsValues) {
   const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Finalização']);
   const focoByDate = registeredOverride === undefined ? focoTelephoneByDate(focoValues) : null;
   const inbound = new Set(), mixed = new Set(), eligible = new Set();
@@ -72,13 +92,14 @@ export function callbackMetrics(interactionsValues = [], callbacksValues = [], f
     inbound.add(id);
     if (isEligibleFinalization(cell(row, i.Finalização))) eligible.add(id);
   }
-  const { performed, success, failed } = callbackResults(callbacksValues, eligible);
+  const returns = returnSource instanceof Map ? returnSource : returnIndex(returnSource);
+  const { performed, success, failed, uniqueReturns } = callbackResults(callbacksValues, eligible, returns);
   const rate = (value, total) => total ? value / total : null;
   const unique = inbound.size;
   const finished = Math.max(unique - eligible.size, 0);
   const potential = finished + success;
   const registered = registeredOverride === undefined ? (focoByDate ? [...focoByDate.values()].reduce((sum, count) => sum + count, 0) : null) : registeredOverride;
-  return { received: receivedOverride === undefined ? null : receivedOverride, answered: null, unique, finished, eligible: eligible.size, performed, success, failed, pending: Math.max(eligible.size - performed, 0), performedRate: rate(performed, eligible.size), successRate: rate(success, performed), failedRate: rate(failed, performed), potential, registered, registeredRate: registered === null ? null : rate(registered, potential), mixed: mixed.size };
+  return { received: receivedOverride === undefined ? null : receivedOverride, answered: null, unique, finished, eligible: eligible.size, performed, uniqueReturns, success, failed, pending: Math.max(eligible.size - performed, 0), performedRate: rate(performed, eligible.size), successRate: rate(success, performed), failedRate: rate(failed, performed), potential, registered, registeredRate: registered === null ? null : rate(registered, potential), mixed: mixed.size };
 }
 
 function dayKey(value) {
@@ -92,7 +113,7 @@ function dayKey(value) {
 }
 
 function summarizeMetrics(rows, received, registered) {
-  const keys = ['unique', 'finished', 'eligible', 'performed', 'success', 'failed', 'potential', 'mixed'];
+  const keys = ['unique', 'finished', 'eligible', 'performed', 'uniqueReturns', 'success', 'failed', 'potential', 'mixed'];
   const total = Object.fromEntries(keys.map(key => [key, rows.reduce((sum, row) => sum + row[key], 0)]));
   const rate = (value, denominator) => denominator ? value / denominator : null;
   total.pending = Math.max(total.eligible - total.performed, 0);
@@ -103,7 +124,7 @@ function summarizeMetrics(rows, received, registered) {
 
 export function callbackReport(interactions, callbacks = [], foco = [], receivedByDate = new Map()) {
   const i = columns(interactions, ['Data', 'ID de conversa']);
-  const buckets = new Map(), seen = new Map(), focoByDate = focoTelephoneByDate(foco);
+  const buckets = new Map(), seen = new Map(), focoByDate = focoTelephoneByDate(foco), returns = returnIndex(interactions);
   for (const row of interactions.slice(1)) {
     const id = normalize(cell(row, i['ID de conversa'])); if (!id) continue;
     const date = dayKey(cell(row, i.Data));
@@ -114,6 +135,6 @@ export function callbackReport(interactions, callbacks = [], foco = [], received
   for (const date of receivedByDate.keys()) if (!buckets.has(date)) buckets.set(date, []);
   const registeredTotal = focoByDate ? [...focoByDate.values()].reduce((sum, count) => sum + count, 0) : null;
   const receivedTotal = receivedByDate.size ? [...receivedByDate.values()].reduce((sum, count) => sum + count, 0) : null;
-  const rows = [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => ({ date, ...callbackMetrics([interactions[0], ...values], callbacks, foco, focoByDate ? focoByDate.get(date) || 0 : null, receivedByDate.has(date) ? receivedByDate.get(date) : null) }));
+  const rows = [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => ({ date, ...callbackMetrics([interactions[0], ...values], callbacks, foco, focoByDate ? focoByDate.get(date) || 0 : null, receivedByDate.has(date) ? receivedByDate.get(date) : null, returns) }));
   return { metrics: summarizeMetrics(rows, receivedTotal, registeredTotal), rows };
 }
