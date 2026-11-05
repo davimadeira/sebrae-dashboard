@@ -10,19 +10,32 @@ function isEligibleFinalization(value) {
   return eligibleFinalizations.some(eligible => finalization.includes(eligible));
 }
 
-function hasConversation(value) {
-  const duration = String(value ?? '').trim().replace(',', '.');
-  if (!duration) return false;
-  if (/^\d+(?:\.\d+)?$/.test(duration)) return Number(duration) > 0;
-  const time = /^(\d+):([0-5]\d):([0-5]\d(?:\.\d+)?)$/.exec(duration);
-  return !!time && Number(time[1]) * 3600 + Number(time[2]) * 60 + Number(time[3]) > 0;
-}
-
-function columns(values, labels) {
+function columns(values, labels, sheet = 'Interações') {
   const headers = values[0] || [];
   const indices = Object.fromEntries(labels.map(label => [label, headers.findIndex(header => normalize(header) === normalize(label))]));
-  if (Object.values(indices).some(index => index < 0)) throw invalid('A estrutura da aba Interações mudou. Confira os cabeçalhos antes de atualizar o painel Callback.');
+  if (Object.values(indices).some(index => index < 0)) throw invalid(`A estrutura da aba ${sheet} mudou. Confira os cabeçalhos antes de atualizar o painel Callback.`);
   return indices;
+}
+
+function numeric(value) {
+  const number = Number(String(value ?? '').trim().replace(',', '.'));
+  return Number.isFinite(number) ? number : 0;
+}
+
+function callbackResults(values, eligible) {
+  const c = columns(values, ['ID da chamada original', 'Status do callback', 'Quantidade de tentativas', 'Tentativas com conversa'], 'Callbacks');
+  const performed = new Set(), success = new Set();
+  for (const row of values.slice(1)) {
+    const id = normalize(cell(row, c['ID da chamada original']));
+    if (!id || !eligible.has(id)) continue;
+    const status = normalize(cell(row, c['Status do callback']));
+    const attempts = numeric(cell(row, c['Quantidade de tentativas']));
+    const conversations = numeric(cell(row, c['Tentativas com conversa']));
+    if (attempts <= 0 && status !== 'sucesso' && status !== 'insucesso') continue;
+    performed.add(id);
+    if (conversations > 0 || status === 'sucesso') success.add(id);
+  }
+  return { performed: performed.size, success: success.size, failed: performed.size - success.size };
 }
 
 function focoTelephoneByDate(values) {
@@ -47,32 +60,20 @@ function focoTelephoneByDate(values) {
   return result;
 }
 
-export function callbackMetrics(interactionsValues = [], _callbacksValues = [], focoValues = [], registeredOverride, receivedOverride) {
-  const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Finalização', 'Total de conversas', 'ANI', 'DNIS']);
+export function callbackMetrics(interactionsValues = [], callbacksValues = [], focoValues = [], registeredOverride, receivedOverride) {
+  const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Finalização']);
   const focoByDate = registeredOverride === undefined ? focoTelephoneByDate(focoValues) : null;
   const inbound = new Set(), mixed = new Set(), eligible = new Set();
-  const callbacksBySipAndDnis = new Map();
   for (const row of interactionsValues.slice(1)) {
     const id = normalize(cell(row, i['ID de conversa']));
     if (!id || normalize(cell(row, i['Tipo de mídia'])) !== 'voz') continue;
     const direction = normalize(cell(row, i['Direção']));
-    const ani = normalize(cell(row, i.ANI));
-    const conversation = hasConversation(cell(row, i['Total de conversas']));
-    if (ani.startsWith('sip:')) {
-      const dnis = normalize(cell(row, i.DNIS));
-      const key = `${ani}\u0000${dnis}`;
-      const callback = callbacksBySipAndDnis.get(key) || { success: false };
-      callback.success ||= conversation;
-      callbacksBySipAndDnis.set(key, callback);
-    }
     if (direction === 'entrada/saida') mixed.add(id);
     if (direction !== 'entrada') continue;
     inbound.add(id);
     if (isEligibleFinalization(cell(row, i.Finalização))) eligible.add(id);
   }
-  const performed = callbacksBySipAndDnis.size;
-  const success = [...callbacksBySipAndDnis.values()].filter(callback => callback.success).length;
-  const failed = performed - success;
+  const { performed, success, failed } = callbackResults(callbacksValues, eligible);
   const rate = (value, total) => total ? value / total : null;
   const unique = inbound.size;
   const finished = Math.max(unique - eligible.size, 0);

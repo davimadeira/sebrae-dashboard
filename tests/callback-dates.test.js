@@ -11,9 +11,9 @@ const interactions = [
   ['d', 'voz', 'Entrada', 'Ana', '', '31/02/2026', 'p4', '', 'tel:+55', 'tel:103'],
 ];
 const callbacks = [
-  ['ID da chamada original', 'Status do callback', 'Data da chamada', 'Primeiro retorno'],
-  ['a', 'Sucesso', '01/09/26 23:59', '02/09/26 00:10'],
-  ['b', 'Sem saída identificada', '02/09/2026 10:00'],
+  ['ID da chamada original', 'Status do callback', 'Data da chamada', 'Primeiro retorno', 'Quantidade de tentativas', 'Tentativas com conversa'],
+  ['a', 'Sucesso', '01/09/26 23:59', '02/09/26 00:10', '1', '1'],
+  ['b', 'Sem saída identificada', '02/09/2026 10:00', '', '0', '0'],
 ];
 const foco = [
   ['Data de abertura', 'Canal de Atendimento', 'Status', 'Protocolo CNR', 'Interação Foco nº'],
@@ -50,14 +50,20 @@ test('não conta o mesmo ID em dois dias diferentes', () => {
   assert.throws(() => callbackReport([...interactions, ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '02/09/26', '', '', 'tel:+55', 'tel:100']], callbacks), /datas diferentes/);
 });
 
-test('deduplica o par SIP e DNIS dentro de cada dia', () => {
+test('conta cada origem elegível realizada uma vez na data da origem', () => {
   const values = [interactions[0],
-    ['s1', 'voz', 'Saída', 'Ana', '00:01:00', '01/09/2026', '', '', 'sip:operador', 'tel:100'],
-    ['s2', 'voz', 'Saída', 'Ana', '00:01:00', '01/09/2026', '', '', 'sip:operador', 'tel:200'],
-    ['s3', 'voz', 'Saída', 'Ana', '00:01:00', '02/09/2026', '', '', 'sip:operador', 'tel:300'],
+    ['e1', 'voz', 'Entrada', 'Ana', '', '01/09/2026', '', 'Erro sistêmico', 'tel:100', 'tel:900'],
+    ['e2', 'voz', 'Entrada', 'Bia', '', '02/09/2026', '', 'Ligação muda', 'tel:200', 'tel:900'],
   ];
-  const report = callbackReport(values);
-  assert.deepEqual(report.rows.map(row => row.performed), [2, 1]);
-  assert.equal(report.metrics.performed, 3);
+  const results = [callbacks[0],
+    ['e1', 'Sucesso', '01/09/2026', '', '3', '1'],
+    ['e1', 'Sucesso', '01/09/2026', '', '3', '1'],
+    ['e2', 'Insucesso', '02/09/2026', '', '2', '0'],
+  ];
+  const report = callbackReport(values, results);
+  assert.deepEqual(report.rows.map(row => row.performed), [1, 1]);
+  assert.equal(report.metrics.performed, 2);
+  assert.equal(report.metrics.success, 1);
+  assert.equal(report.metrics.failed, 1);
   assert.deepEqual(summarizeCallbackRows(report.rows), report.metrics);
 });

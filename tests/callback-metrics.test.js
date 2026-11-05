@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import { callbackMetrics } from '../api/_callbackMetrics.js';
 
 const headers = ['Direção', 'Total de conversas', 'ID de conversa', 'Usuários', 'Tipo de mídia', 'Finalização', 'ANI', 'DNIS'];
+const callbackHeaders = ['ID da chamada original', 'Status do callback', 'Quantidade de tentativas', 'Tentativas com conversa'];
+const noCallbacks = [callbackHeaders];
 
-test('usa a tabulação para elegíveis e ANI sip para callbacks', () => {
+test('usa a tabulação para elegíveis e os resultados vinculados da aba Callbacks', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '00:00:00', 'e1', '', 'voz', 'Queda de ligação', 'tel:+55', 'tel:100'],
     ['Entrada', '00:00:00', 'e2', '', 'voz', 'ERRO SISTÊMICO', 'tel:+55', 'tel:101'],
@@ -13,24 +15,28 @@ test('usa a tabulação para elegíveis e ANI sip para callbacks', () => {
     ['Saída', '00:00:00', 's2', 'Ana', 'voz', '', 'sip:callback-2', 'tel:201'],
     ['Saída', '', 's3', 'Ana', 'voz', '', 'sip:callback-3', 'tel:202'],
     ['Saída', '00:02:00', 'x', 'Ana', 'voz', '', 'tel:+55', 'tel:203'],
+  ], [callbackHeaders,
+    ['e1', 'Sucesso', '1', '1'],
+    ['e2', 'Insucesso', '1', '0'],
+    ['n1', 'Sucesso', '1', '1'],
   ]);
   assert.equal(metrics.eligible, 2);
-  assert.equal(metrics.performed, 3);
+  assert.equal(metrics.performed, 2);
   assert.equal(metrics.success, 1);
-  assert.equal(metrics.failed, 2);
+  assert.equal(metrics.failed, 1);
   assert.equal(metrics.pending, 0);
   assert.equal(metrics.unique, 3);
   assert.equal(metrics.finished, 1); // atendidas únicas menos elegíveis
   assert.equal(metrics.potential, 2); // finalizadas mais callbacks com sucesso
   assert.equal(metrics.received, null); // recebidas vêm dos arquivos diários do Drive
-  assert.equal(metrics.successRate, 1 / 3);
+  assert.equal(metrics.successRate, 1 / 2);
 });
 
 test('potencial soma finalizadas e callbacks com sucesso', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '00:01:00', 't1', 'Ana', 'voz', 'Teste de atendimento', 'tel:+55', 'tel:100'],
     ['Entrada', '00:01:00', 'n1', 'Ana', 'voz', 'Atendimento concluído', 'tel:+55', 'tel:101'],
-  ]);
+  ], noCallbacks);
   assert.equal(metrics.finished, 2);
   assert.equal(metrics.potential, 2);
 });
@@ -41,7 +47,7 @@ test('aceita todas as tabulações elegíveis apenas na entrada e separa Entrada
     ['Entrada', '', 'b', '', 'voz', 'Ligação muda/caída', 'tel:+55', 'tel:101'],
     ['Entrada', '', 'c', '', 'voz', 'Falta de interação', 'tel:+55', 'tel:102'],
     ['Entrada/Saída', '00:01:00', 'd', 'Ana', 'voz', 'Queda de ligação', 'sip:callback', 'tel:103'],
-  ]);
+  ], [callbackHeaders, ['a', 'Sucesso', '2', '1']]);
   assert.equal(metrics.eligible, 3);
   assert.equal(metrics.mixed, 1);
   assert.equal(metrics.performed, 1);
@@ -58,28 +64,30 @@ test('reconhece tabulação elegível dentro de finalizações compostas e sem a
     ['Entrada', '', 'd', '', 'voz', 'Portal;queda de ligacao', 'tel:+55', 'tel:103'],
     ['Saída', '', 'e', '', 'voz', 'Portal;erro sistêmico', 'tel:+55', 'tel:104'],
     ['Entrada', '', 'f', '', 'chat', 'Erro sistêmico', 'tel:+55', 'tel:105'],
-  ]);
+  ], noCallbacks);
   assert.equal(metrics.eligible, 4);
   assert.equal(metrics.unique, 4);
   assert.equal(metrics.finished, 0);
 });
 
-test('deduplica somente o mesmo par SIP e DNIS', () => {
+test('conta cada ID original elegível uma vez e ignora resultados de não elegíveis', () => {
   const metrics = callbackMetrics([headers,
-    ['Saída', '', 'a1', 'Ana', 'voz', '', 'sip:operador-1', 'tel:100'],
-    ['Saída', '00:00:05', 'a2', 'Ana', 'voz', '', 'sip:operador-1', 'tel:200'],
-    ['Saída', '00:00:03', 'a3', 'Ana', 'voz', '', 'sip:operador-1', 'tel:200'],
-    ['Saída', '00:00:02', 'b1', 'Bia', 'voz', '', 'sip:operador-2', 'tel:100'],
-    ['Saída', '', 'c1', 'Caio', 'voz', '', 'sip:operador-3', 'tel:300'],
-    ['Saída', '00:00:00', 'c2', 'Caio', 'voz', '', 'sip:operador-3', 'tel:301'],
+    ['Entrada', '', 'a', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
+    ['Entrada', '', 'b', 'Bia', 'voz', 'Ligação muda', 'tel:200', 'tel:900'],
+    ['Entrada', '', 'n', 'Caio', 'voz', 'Atendimento concluído', 'tel:300', 'tel:900'],
+  ], [callbackHeaders,
+    ['a', 'Sucesso', '3', '1'],
+    ['a', 'Sucesso', '3', '1'],
+    ['b', 'Insucesso', '2', '0'],
+    ['n', 'Sucesso', '1', '1'],
   ]);
-  assert.equal(metrics.performed, 5);
-  assert.equal(metrics.success, 2);
-  assert.equal(metrics.failed, 3);
+  assert.equal(metrics.performed, 2);
+  assert.equal(metrics.success, 1);
+  assert.equal(metrics.failed, 1);
 });
 
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
-  const metrics = callbackMetrics([headers]);
+  const metrics = callbackMetrics([headers], noCallbacks);
   assert.equal(metrics.received, null);
   assert.equal(metrics.finished, 0);
   assert.equal(metrics.performedRate, null);
@@ -87,5 +95,6 @@ test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
 });
 
 test('estrutura ausente exige revisão', () => {
-  assert.throws(() => callbackMetrics([['Direção']]), { statusCode: 409 });
+  assert.throws(() => callbackMetrics([['Direção']], noCallbacks), { statusCode: 409 });
+  assert.throws(() => callbackMetrics([headers], [['ID da chamada original']]), { statusCode: 409 });
 });
