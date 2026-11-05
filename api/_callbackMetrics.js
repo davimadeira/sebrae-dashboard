@@ -48,10 +48,10 @@ function focoTelephoneByDate(values) {
 }
 
 export function callbackMetrics(interactionsValues = [], _callbacksValues = [], focoValues = [], registeredOverride, receivedOverride) {
-  const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Finalização', 'Total de conversas', 'ANI']);
+  const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Finalização', 'Total de conversas', 'ANI', 'DNIS']);
   const focoByDate = registeredOverride === undefined ? focoTelephoneByDate(focoValues) : null;
   const inbound = new Set(), mixed = new Set(), eligible = new Set();
-  const successfulCallbacks = new Set(), failedCallbacks = new Set();
+  const callbacksBySip = new Map();
   for (const row of interactionsValues.slice(1)) {
     const id = normalize(cell(row, i['ID de conversa']));
     if (!id || normalize(cell(row, i['Tipo de mídia'])) !== 'voz') continue;
@@ -59,16 +59,20 @@ export function callbackMetrics(interactionsValues = [], _callbacksValues = [], 
     const ani = normalize(cell(row, i.ANI));
     const conversation = hasConversation(cell(row, i['Total de conversas']));
     if (ani.startsWith('sip:')) {
-      if (conversation) successfulCallbacks.add(id); else failedCallbacks.add(id);
+      const callback = callbacksBySip.get(ani) || { dnis: new Set(), success: false };
+      const dnis = normalize(cell(row, i.DNIS));
+      if (dnis) callback.dnis.add(dnis);
+      callback.success ||= conversation;
+      callbacksBySip.set(ani, callback);
     }
     if (direction === 'entrada/saida') mixed.add(id);
     if (direction !== 'entrada') continue;
     inbound.add(id);
     if (isEligibleFinalization(cell(row, i.Finalização))) eligible.add(id);
   }
-  const success = successfulCallbacks.size;
-  const failed = [...failedCallbacks].filter(id => !successfulCallbacks.has(id)).length;
-  const performed = success + failed;
+  const performed = callbacksBySip.size;
+  const success = [...callbacksBySip.values()].filter(callback => callback.success).length;
+  const failed = performed - success;
   const rate = (value, total) => total ? value / total : null;
   const unique = inbound.size;
   const finished = Math.max(unique - eligible.size, 0);
@@ -87,6 +91,16 @@ function dayKey(value) {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date.toISOString().slice(0, 10) : 'Sem data';
 }
 
+function summarizeMetrics(rows, received, registered) {
+  const keys = ['unique', 'finished', 'eligible', 'performed', 'success', 'failed', 'potential', 'mixed'];
+  const total = Object.fromEntries(keys.map(key => [key, rows.reduce((sum, row) => sum + row[key], 0)]));
+  const rate = (value, denominator) => denominator ? value / denominator : null;
+  total.pending = Math.max(total.eligible - total.performed, 0);
+  return { ...total, received, answered: null, registered,
+    performedRate: rate(total.performed, total.eligible), successRate: rate(total.success, total.performed),
+    failedRate: rate(total.failed, total.performed), registeredRate: registered === null ? null : rate(registered, total.potential) };
+}
+
 export function callbackReport(interactions, callbacks = [], foco = [], receivedByDate = new Map()) {
   const i = columns(interactions, ['Data', 'ID de conversa']);
   const buckets = new Map(), seen = new Map(), focoByDate = focoTelephoneByDate(foco);
@@ -100,5 +114,6 @@ export function callbackReport(interactions, callbacks = [], foco = [], received
   for (const date of receivedByDate.keys()) if (!buckets.has(date)) buckets.set(date, []);
   const registeredTotal = focoByDate ? [...focoByDate.values()].reduce((sum, count) => sum + count, 0) : null;
   const receivedTotal = receivedByDate.size ? [...receivedByDate.values()].reduce((sum, count) => sum + count, 0) : null;
-  return { metrics: callbackMetrics(interactions, callbacks, foco, registeredTotal, receivedTotal), rows: [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, rows]) => ({ date, ...callbackMetrics([interactions[0], ...rows], callbacks, foco, focoByDate ? focoByDate.get(date) || 0 : null, receivedByDate.has(date) ? receivedByDate.get(date) : null) })) };
+  const rows = [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => ({ date, ...callbackMetrics([interactions[0], ...values], callbacks, foco, focoByDate ? focoByDate.get(date) || 0 : null, receivedByDate.has(date) ? receivedByDate.get(date) : null) }));
+  return { metrics: summarizeMetrics(rows, receivedTotal, registeredTotal), rows };
 }

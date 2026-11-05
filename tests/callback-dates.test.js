@@ -4,11 +4,11 @@ import { callbackReport } from '../api/_callbackMetrics.js';
 import { callbackDateLabels, filterCallbackRows, summarizeCallbackRows } from '../src/utils/callbackView.js';
 
 const interactions = [
-  ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Total de conversas', 'Data', 'Marca externa', 'Finalização', 'ANI'],
-  ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '01/09/26 23:59', 'p1', '', 'tel:+55'],
-  ['b', 'voz', 'Entrada', 'Ana', '', '02/09/2026 10:00', 'p2', 'Queda de ligação', 'tel:+55'],
-  ['c', 'voz', 'Saída', 'Ana', '00:00:00.001', '2026-10-08T12:00:00', 'p3', '', 'sip:callback'],
-  ['d', 'voz', 'Entrada', 'Ana', '', '31/02/2026', 'p4', '', 'tel:+55'],
+  ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Total de conversas', 'Data', 'Marca externa', 'Finalização', 'ANI', 'DNIS'],
+  ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '01/09/26 23:59', 'p1', '', 'tel:+55', 'tel:100'],
+  ['b', 'voz', 'Entrada', 'Ana', '', '02/09/2026 10:00', 'p2', 'Queda de ligação', 'tel:+55', 'tel:101'],
+  ['c', 'voz', 'Saída', 'Ana', '00:00:00.001', '2026-10-08T12:00:00', 'p3', '', 'sip:callback', 'tel:102'],
+  ['d', 'voz', 'Entrada', 'Ana', '', '31/02/2026', 'p4', '', 'tel:+55', 'tel:103'],
 ];
 const callbacks = [
   ['ID da chamada original', 'Status do callback', 'Data da chamada', 'Primeiro retorno'],
@@ -47,5 +47,17 @@ test('combina filtros de mês, semana e dia e recalcula percentuais pelos totais
   assert.equal(summarizeCallbackRows([]).performedRate, null);
 });
 test('não conta o mesmo ID em dois dias diferentes', () => {
-  assert.throws(() => callbackReport([...interactions, ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '02/09/26', '', '', 'tel:+55']], callbacks), /datas diferentes/);
+  assert.throws(() => callbackReport([...interactions, ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '02/09/26', '', '', 'tel:+55', 'tel:100']], callbacks), /datas diferentes/);
+});
+
+test('deduplica o SIP dentro de cada dia e permite o mesmo SIP em outro dia', () => {
+  const values = [interactions[0],
+    ['s1', 'voz', 'Saída', 'Ana', '00:01:00', '01/09/2026', '', '', 'sip:operador', 'tel:100'],
+    ['s2', 'voz', 'Saída', 'Ana', '00:01:00', '01/09/2026', '', '', 'sip:operador', 'tel:200'],
+    ['s3', 'voz', 'Saída', 'Ana', '00:01:00', '02/09/2026', '', '', 'sip:operador', 'tel:300'],
+  ];
+  const report = callbackReport(values);
+  assert.deepEqual(report.rows.map(row => row.performed), [1, 1]);
+  assert.equal(report.metrics.performed, 2);
+  assert.deepEqual(summarizeCallbackRows(report.rows), report.metrics);
 });

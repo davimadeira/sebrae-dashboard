@@ -11,11 +11,11 @@ const columns = [
   ['Atendidas únicas', 'unique', 'Atendidas Únicas = ID do atendimento', 'volume'],
   ['Finalizadas', 'finished', 'Finalizadas = Atendidas Únicas - Elegíveis para callback', 'volume'],
   ['Elegíveis para callback', 'eligible', 'Direção Entrada e Finalização contendo: Erro sistêmico/LIGACAO MUDA/Falta de interação/Queda de ligação', 'return'],
-  ['Callback realizado', 'performed', 'Interações cujo ANI começa com sip:', 'return'],
+  ['Callback realizado', 'performed', 'SIPs distintos por dia; vários DNIS no mesmo SIP contam uma vez', 'return'],
   ['% realizado', 'performedRate', 'Realizados ÷ elegíveis', 'return'],
-  ['Callback com sucesso', 'success', 'Callback SIP com Total de conversas maior que zero', 'return'],
+  ['Callback com sucesso', 'success', 'SIP com ao menos uma linha cujo Total de conversas seja maior que zero', 'return'],
   ['% com sucesso', 'successRate', 'Sucesso ÷ realizados', 'return'],
-  ['Callback sem sucesso', 'failed', 'Callback SIP com Total de conversas vazio ou zero', 'return'],
+  ['Callback sem sucesso', 'failed', 'SIP sem nenhuma linha com Total de conversas maior que zero', 'return'],
   ['% sem sucesso', 'failedRate', 'Sem sucesso ÷ realizados', 'return'],
   ['Callback não realizado', 'pending', 'Elegíveis menos callbacks SIP realizados', 'return'],
   ['Potencial de registros', 'potential', 'Potencial de Registro = Finalizadas + Callback com sucesso', 'focus'],
@@ -91,8 +91,8 @@ export default function CallbackPanel({ user }) {
       <li>Atendidas únicas: IDs distintos de atendimento de voz com direção Entrada.</li>
       <li>Finalizadas: Atendidas únicas menos Elegíveis para callback.</li>
       <li>Elegíveis: IDs distintos de voz com direção Entrada e Finalização contendo Queda de ligação, LIGACAO MUDA, Erro sistêmico ou Falta de interação. A tabulação pode aparecer junto de outros textos e pode estar sem acentos.</li>
-      <li>Callback realizado: interação cujo ANI começa com <strong>sip:</strong>. Não há vínculo por telefone, operador ou limite de horário.</li>
-      <li>Sucesso: callback SIP com Total de conversas maior que zero. Sem sucesso: callback SIP com Total de conversas vazio ou zero.</li>
+      <li>Callback realizado: SIP distinto no ANI, contado uma vez em cada data. Se o mesmo SIP aparecer com um ou vários DNIS, conta uma vez; o mesmo DNIS em SIPs diferentes conta uma vez para cada SIP.</li>
+      <li>Sucesso: o SIP tem ao menos uma linha com Total de conversas maior que zero. Sem sucesso: todas as linhas do SIP têm Total de conversas vazio ou zero.</li>
       <li>Callback não realizado é a diferença entre elegíveis e realizados, sem resultado negativo quando houver mais callbacks SIP do que elegíveis.</li>
       <li>As taxas são: realizados ÷ elegíveis; sucesso ÷ realizados; sem sucesso ÷ realizados. Tentativas adicionais não multiplicam o número de chamadas originais.</li>
       <li>Potencial de registros é Finalizadas mais Callback com sucesso.</li>
