@@ -51,7 +51,7 @@ export function callbackMetrics(interactionsValues = [], _callbacksValues = [], 
   const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Finalização', 'Total de conversas', 'ANI', 'DNIS']);
   const focoByDate = registeredOverride === undefined ? focoTelephoneByDate(focoValues) : null;
   const inbound = new Set(), mixed = new Set(), eligible = new Set();
-  const callbacksBySip = new Map();
+  const callbacksBySipAndDnis = new Map();
   for (const row of interactionsValues.slice(1)) {
     const id = normalize(cell(row, i['ID de conversa']));
     if (!id || normalize(cell(row, i['Tipo de mídia'])) !== 'voz') continue;
@@ -59,19 +59,19 @@ export function callbackMetrics(interactionsValues = [], _callbacksValues = [], 
     const ani = normalize(cell(row, i.ANI));
     const conversation = hasConversation(cell(row, i['Total de conversas']));
     if (ani.startsWith('sip:')) {
-      const callback = callbacksBySip.get(ani) || { dnis: new Set(), success: false };
       const dnis = normalize(cell(row, i.DNIS));
-      if (dnis) callback.dnis.add(dnis);
+      const key = `${ani}\u0000${dnis}`;
+      const callback = callbacksBySipAndDnis.get(key) || { success: false };
       callback.success ||= conversation;
-      callbacksBySip.set(ani, callback);
+      callbacksBySipAndDnis.set(key, callback);
     }
     if (direction === 'entrada/saida') mixed.add(id);
     if (direction !== 'entrada') continue;
     inbound.add(id);
     if (isEligibleFinalization(cell(row, i.Finalização))) eligible.add(id);
   }
-  const performed = callbacksBySip.size;
-  const success = [...callbacksBySip.values()].filter(callback => callback.success).length;
+  const performed = callbacksBySipAndDnis.size;
+  const success = [...callbacksBySipAndDnis.values()].filter(callback => callback.success).length;
   const failed = performed - success;
   const rate = (value, total) => total ? value / total : null;
   const unique = inbound.size;

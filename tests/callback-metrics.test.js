@@ -64,7 +64,7 @@ test('reconhece tabulação elegível dentro de finalizações compostas e sem a
   assert.equal(metrics.finished, 0);
 });
 
-test('conta um callback por SIP mesmo com vários DNIS e aceita o mesmo DNIS em outro SIP', () => {
+test('deduplica somente o mesmo par SIP e DNIS', () => {
   const metrics = callbackMetrics([headers,
     ['Saída', '', 'a1', 'Ana', 'voz', '', 'sip:operador-1', 'tel:100'],
     ['Saída', '00:00:05', 'a2', 'Ana', 'voz', '', 'sip:operador-1', 'tel:200'],
@@ -73,9 +73,9 @@ test('conta um callback por SIP mesmo com vários DNIS e aceita o mesmo DNIS em 
     ['Saída', '', 'c1', 'Caio', 'voz', '', 'sip:operador-3', 'tel:300'],
     ['Saída', '00:00:00', 'c2', 'Caio', 'voz', '', 'sip:operador-3', 'tel:301'],
   ]);
-  assert.equal(metrics.performed, 3);
+  assert.equal(metrics.performed, 5);
   assert.equal(metrics.success, 2);
-  assert.equal(metrics.failed, 1);
+  assert.equal(metrics.failed, 3);
 });
 
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {

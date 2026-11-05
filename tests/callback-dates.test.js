@@ -50,14 +50,14 @@ test('não conta o mesmo ID em dois dias diferentes', () => {
   assert.throws(() => callbackReport([...interactions, ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '02/09/26', '', '', 'tel:+55', 'tel:100']], callbacks), /datas diferentes/);
 });
 
-test('deduplica o SIP dentro de cada dia e permite o mesmo SIP em outro dia', () => {
+test('deduplica o par SIP e DNIS dentro de cada dia', () => {
   const values = [interactions[0],
     ['s1', 'voz', 'Saída', 'Ana', '00:01:00', '01/09/2026', '', '', 'sip:operador', 'tel:100'],
     ['s2', 'voz', 'Saída', 'Ana', '00:01:00', '01/09/2026', '', '', 'sip:operador', 'tel:200'],
     ['s3', 'voz', 'Saída', 'Ana', '00:01:00', '02/09/2026', '', '', 'sip:operador', 'tel:300'],
   ];
   const report = callbackReport(values);
-  assert.deepEqual(report.rows.map(row => row.performed), [1, 1]);
-  assert.equal(report.metrics.performed, 2);
+  assert.deepEqual(report.rows.map(row => row.performed), [2, 1]);
+  assert.equal(report.metrics.performed, 3);
   assert.deepEqual(summarizeCallbackRows(report.rows), report.metrics);
 });
