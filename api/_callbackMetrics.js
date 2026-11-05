@@ -34,15 +34,14 @@ function customerKey(value) {
 
 function callbackResults(values, eligible, returns) {
   const c = columns(values, ['ID da chamada original', 'Quantidade de tentativas', 'Tentativas com conversa', 'IDs dos retornos'], 'Callbacks');
-  const performed = new Set(), success = new Set(), uniqueReturns = new Set();
+  const performed = new Set(), success = new Set();
   for (const row of values.slice(1)) {
     const id = normalize(cell(row, c['ID da chamada original']));
     if (!id || !eligible.has(id)) continue;
     const attempts = numeric(cell(row, c['Quantidade de tentativas']));
     const conversations = numeric(cell(row, c['Tentativas com conversa']));
     if (attempts <= 0) continue;
-    performed.add(id);
-    if (conversations > 0) success.add(id);
+    const rowReturns = new Set();
     for (const returnId of cell(row, c['IDs dos retornos']).split(/\s*\|\s*/).map(normalize).filter(Boolean)) {
       const found = returns.get(returnId); if (!found) continue;
       const { row: returned, c: r } = found;
@@ -51,10 +50,12 @@ function callbackResults(values, eligible, returns) {
       const customer = customerKey(cell(returned, r.DNIS));
       if (normalize(cell(returned, r['Tipo de mídia'])) !== 'voz' || !['saida', 'entrada/saida'].includes(direction)) continue;
       if (!normalize(cell(returned, r.ANI)).startsWith('sip:') || !operator || !customer) continue;
-      uniqueReturns.add(`${operator}\u0000${customer}`);
+      rowReturns.add(`${operator}\u0000${customer}`);
     }
+    for (const returned of rowReturns) performed.add(returned);
+    if (conversations > 0) for (const returned of rowReturns) success.add(returned);
   }
-  return { performed: performed.size, success: success.size, failed: performed.size - success.size, uniqueReturns: uniqueReturns.size };
+  return { performed: performed.size, success: success.size, failed: performed.size - success.size };
 }
 
 function focoTelephoneByDate(values) {
@@ -93,13 +94,13 @@ export function callbackMetrics(interactionsValues = [], callbacksValues = [], f
     if (isEligibleFinalization(cell(row, i.Finalização))) eligible.add(id);
   }
   const returns = returnSource instanceof Map ? returnSource : returnIndex(returnSource);
-  const { performed, success, failed, uniqueReturns } = callbackResults(callbacksValues, eligible, returns);
+  const { performed, success, failed } = callbackResults(callbacksValues, eligible, returns);
   const rate = (value, total) => total ? value / total : null;
   const unique = inbound.size;
   const finished = Math.max(unique - eligible.size, 0);
   const potential = finished + success;
   const registered = registeredOverride === undefined ? (focoByDate ? [...focoByDate.values()].reduce((sum, count) => sum + count, 0) : null) : registeredOverride;
-  return { received: receivedOverride === undefined ? null : receivedOverride, answered: null, unique, finished, eligible: eligible.size, performed, uniqueReturns, success, failed, pending: Math.max(eligible.size - performed, 0), performedRate: rate(performed, eligible.size), successRate: rate(success, performed), failedRate: rate(failed, performed), potential, registered, registeredRate: registered === null ? null : rate(registered, potential), mixed: mixed.size };
+  return { received: receivedOverride === undefined ? null : receivedOverride, answered: null, unique, finished, eligible: eligible.size, performed, success, failed, pending: Math.max(eligible.size - performed, 0), performedRate: rate(performed, eligible.size), successRate: rate(success, performed), failedRate: rate(failed, performed), potential, registered, registeredRate: registered === null ? null : rate(registered, potential), mixed: mixed.size };
 }
 
 function dayKey(value) {
@@ -113,7 +114,7 @@ function dayKey(value) {
 }
 
 function summarizeMetrics(rows, received, registered) {
-  const keys = ['unique', 'finished', 'eligible', 'performed', 'uniqueReturns', 'success', 'failed', 'potential', 'mixed'];
+  const keys = ['unique', 'finished', 'eligible', 'performed', 'success', 'failed', 'potential', 'mixed'];
   const total = Object.fromEntries(keys.map(key => [key, rows.reduce((sum, row) => sum + row[key], 0)]));
   const rate = (value, denominator) => denominator ? value / denominator : null;
   total.pending = Math.max(total.eligible - total.performed, 0);

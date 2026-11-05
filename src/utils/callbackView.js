@@ -13,7 +13,7 @@ export function filterCallbackRows(rows, filters) {
 }
 
 export function summarizeCallbackRows(rows) {
-  const keys = ['unique', 'finished', 'eligible', 'performed', 'uniqueReturns', 'success', 'failed', 'pending', 'potential', 'mixed'];
+  const keys = ['unique', 'finished', 'eligible', 'performed', 'success', 'failed', 'pending', 'potential', 'mixed'];
   const total = Object.fromEntries(keys.map(key => [key, rows.reduce((sum, row) => sum + row[key], 0)]));
   total.received = rows.length && rows.every(row => typeof row.received === 'number')
     ? rows.reduce((sum, row) => sum + row.received, 0)

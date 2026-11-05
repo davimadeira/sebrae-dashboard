@@ -16,9 +16,9 @@ test('usa a tabulação para elegíveis e os resultados vinculados da aba Callba
     ['Saída', '', 's3', 'Ana', 'voz', '', 'sip:callback-3', 'tel:202'],
     ['Saída', '00:02:00', 'x', 'Ana', 'voz', '', 'tel:+55', 'tel:203'],
   ], [callbackHeaders,
-    ['e1', 'Sucesso', '1', '1'],
-    ['e2', 'Insucesso', '1', '0'],
-    ['n1', 'Sucesso', '1', '1'],
+    ['e1', 'Sucesso', '1', '1', 's1'],
+    ['e2', 'Insucesso', '1', '0', 's2'],
+    ['n1', 'Sucesso', '1', '1', 's3'],
   ]);
   assert.equal(metrics.eligible, 2);
   assert.equal(metrics.performed, 2);
@@ -47,7 +47,7 @@ test('aceita todas as tabulações elegíveis apenas na entrada e separa Entrada
     ['Entrada', '', 'b', '', 'voz', 'Ligação muda/caída', 'tel:+55', 'tel:101'],
     ['Entrada', '', 'c', '', 'voz', 'Falta de interação', 'tel:+55', 'tel:102'],
     ['Entrada/Saída', '00:01:00', 'd', 'Ana', 'voz', 'Queda de ligação', 'sip:callback', 'tel:103'],
-  ], [callbackHeaders, ['a', 'Sucesso', '2', '1']]);
+  ], [callbackHeaders, ['a', 'Sucesso', '2', '1', 'd']]);
   assert.equal(metrics.eligible, 3);
   assert.equal(metrics.mixed, 1);
   assert.equal(metrics.performed, 1);
@@ -75,11 +75,14 @@ test('conta cada ID original elegível uma vez e ignora resultados de não eleg�
     ['Entrada', '', 'a', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['Entrada', '', 'b', 'Bia', 'voz', 'Ligação muda', 'tel:200', 'tel:900'],
     ['Entrada', '', 'n', 'Caio', 'voz', 'Atendimento concluído', 'tel:300', 'tel:900'],
+    ['Saída', '', 'ra', 'Ana', 'voz', '', 'sip:ana', 'tel:901'],
+    ['Saída', '', 'rb', 'Bia', 'voz', '', 'sip:bia', 'tel:902'],
+    ['Saída', '', 'rn', 'Caio', 'voz', '', 'sip:caio', 'tel:903'],
   ], [callbackHeaders,
-    ['a', 'Sucesso', '3', '1'],
-    ['a', 'Sucesso', '3', '1'],
-    ['b', 'Insucesso', '2', '0'],
-    ['n', 'Sucesso', '1', '1'],
+    ['a', 'Sucesso', '3', '1', 'ra'],
+    ['a', 'Sucesso', '3', '1', 'ra'],
+    ['b', 'Insucesso', '2', '0', 'rb'],
+    ['n', 'Sucesso', '1', '1', 'rn'],
   ]);
   assert.equal(metrics.performed, 2);
   assert.equal(metrics.success, 1);
@@ -91,10 +94,13 @@ test('exige tentativa para realizado e conversa para sucesso, mesmo com status d
     ['Entrada', '', 'a', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['Entrada', '', 'b', 'Bia', 'voz', 'Ligação muda', 'tel:200', 'tel:901'],
     ['Entrada', '', 'c', 'Caio', 'voz', 'Queda de ligação', 'tel:300', 'tel:902'],
+    ['Saída', '', 'ra', 'Ana', 'voz', '', 'sip:ana', 'tel:910'],
+    ['Saída', '', 'rb', 'Bia', 'voz', '', 'sip:bia', 'tel:911'],
+    ['Saída', '', 'rc', 'Caio', 'voz', '', 'sip:caio', 'tel:912'],
   ], [callbackHeaders,
-    ['a', 'Sucesso', '0', '0'],
-    ['b', 'Sucesso', '1', '0'],
-    ['c', 'Insucesso', '2', '1'],
+    ['a', 'Sucesso', '0', '0', 'ra'],
+    ['b', 'Sucesso', '1', '0', 'rb'],
+    ['c', 'Insucesso', '2', '1', 'rc'],
   ]);
   assert.equal(metrics.performed, 2);
   assert.equal(metrics.success, 1);
@@ -102,7 +108,7 @@ test('exige tentativa para realizado e conversa para sucesso, mesmo com status d
   assert.equal(metrics.pending, 1);
 });
 
-test('retornos únicos removem repetição do mesmo cliente e operador no dia', () => {
+test('callback realizado remove repetição do mesmo cliente e operador no dia', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '', 'e1', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['Saída', '', 'r1', 'Ana', 'voz', '', 'sip:ana', 'tel:+55 11 99999-0000'],
@@ -112,8 +118,9 @@ test('retornos únicos removem repetição do mesmo cliente e operador no dia', 
   ], [callbackHeaders,
     ['e1', 'Sucesso', '4', '1', 'r1 | r2 | r3 | r4'],
   ]);
-  assert.equal(metrics.performed, 1);
-  assert.equal(metrics.uniqueReturns, 3);
+  assert.equal(metrics.performed, 3);
+  assert.equal(metrics.success, 3);
+  assert.equal(metrics.failed, 0);
 });
 
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {

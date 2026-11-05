@@ -64,9 +64,7 @@ test('conta cada origem elegível realizada uma vez na data da origem', () => {
   ];
   const report = callbackReport(values, results);
   assert.deepEqual(report.rows.map(row => row.performed), [1, 1]);
-  assert.deepEqual(report.rows.map(row => row.uniqueReturns), [1, 1]);
   assert.equal(report.metrics.performed, 2);
-  assert.equal(report.metrics.uniqueReturns, 2);
   assert.equal(report.metrics.success, 1);
   assert.equal(report.metrics.failed, 1);
   assert.deepEqual(summarizeCallbackRows(report.rows), report.metrics);

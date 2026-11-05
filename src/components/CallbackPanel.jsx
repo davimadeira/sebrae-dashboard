@@ -11,8 +11,7 @@ const columns = [
   ['Atendidas únicas', 'unique', 'Atendidas Únicas = ID do atendimento', 'volume'],
   ['Finalizadas', 'finished', 'Finalizadas = Atendidas Únicas - Elegíveis para callback', 'volume'],
   ['Elegíveis para callback', 'eligible', 'Direção Entrada e Finalização contendo: Erro sistêmico/LIGACAO MUDA/Falta de interação/Queda de ligação', 'return'],
-  ['Callback realizado', 'performed', 'IDs elegíveis com ao menos uma tentativa vinculada na aba Callbacks', 'return'],
-  ['Retornos únicos', 'uniqueReturns', 'Combinações únicas de operador do retorno e DNIS do cliente no dia da chamada original', 'return'],
+  ['Callback realizado', 'performed', 'Combinações únicas de operador do retorno e DNIS do cliente no dia da chamada original', 'return'],
   ['% realizado', 'performedRate', 'Realizados ÷ elegíveis', 'return'],
   ['Callback com sucesso', 'success', 'ID elegível com ao menos uma tentativa vinculada com conversa', 'return'],
   ['% com sucesso', 'successRate', 'Sucesso ÷ realizados', 'return'],
@@ -92,9 +91,8 @@ export default function CallbackPanel({ user }) {
       <li>Atendidas únicas: IDs distintos de atendimento de voz com direção Entrada.</li>
       <li>Finalizadas: Atendidas únicas menos Elegíveis para callback.</li>
       <li>Elegíveis: IDs distintos de voz com direção Entrada e Finalização contendo Queda de ligação, LIGACAO MUDA, Erro sistêmico ou Falta de interação. A tabulação pode aparecer junto de outros textos e pode estar sem acentos.</li>
-      <li>Callback realizado: ID original elegível com ao menos uma tentativa vinculada na aba Callbacks. Cada chamada original conta uma vez, mesmo quando possui várias tentativas, SIPs ou DNIS.</li>
-      <li>Retornos únicos: combinações distintas de operador do retorno e DNIS do cliente entre os IDs vinculados. Repetições da mesma combinação no dia da chamada original contam uma vez; outro operador ou outro dia pode contar novamente.</li>
-      <li>Sucesso: o ID original tem ao menos uma tentativa vinculada com conversa. Sem sucesso: há tentativa vinculada, mas nenhuma possui conversa.</li>
+      <li>Callback realizado: combinações distintas de operador do retorno e DNIS do cliente entre os IDs vinculados. Repetições da mesma combinação no dia da chamada original contam uma vez; outro operador ou outro dia pode contar novamente.</li>
+      <li>Sucesso: a combinação de operador e cliente possui ao menos uma origem vinculada com conversa. Sem sucesso: foi realizada, mas nenhuma origem vinculada possui conversa.</li>
       <li>Callback não realizado é a diferença entre elegíveis e realizados, sem resultado negativo quando houver mais callbacks SIP do que elegíveis.</li>
       <li>As taxas são: realizados ÷ elegíveis; sucesso ÷ realizados; sem sucesso ÷ realizados. Tentativas adicionais não multiplicam o número de chamadas originais.</li>
       <li>Potencial de registros é Finalizadas mais Callback com sucesso.</li>
