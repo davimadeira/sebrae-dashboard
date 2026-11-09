@@ -15,8 +15,9 @@ export function filterCallbackRows(rows, filters) {
 export function summarizeCallbackRows(rows) {
   const keys = ['unique', 'finished', 'eligible', 'performed', 'success', 'failed', 'pending', 'potential', 'mixed'];
   const total = Object.fromEntries(keys.map(key => [key, rows.reduce((sum, row) => sum + row[key], 0)]));
-  total.received = rows.length && rows.every(row => typeof row.received === 'number')
-    ? rows.reduce((sum, row) => sum + row.received, 0)
+  const receivedRows = rows.filter(row => typeof row.received === 'number');
+  total.received = receivedRows.length
+    ? receivedRows.reduce((sum, row) => sum + row.received, 0)
     : null;
   // Recalculate the filtered total from eligible original IDs and their
   // linked results so the period follows the same formula as each day.

@@ -46,6 +46,15 @@ test('combina filtros de mês, semana e dia e recalcula percentuais pelos totais
   assert.equal(filterCallbackRows(rows, { meses: ['10/2026'], dias: ['01/09/2026'] }).length, 0);
   assert.equal(summarizeCallbackRows([]).performedRate, null);
 });
+test('soma recebidas disponíveis mesmo quando algum dia não possui arquivo', () => {
+  const rows = [
+    { received: 10, unique: 0, finished: 0, eligible: 0, performed: 0, success: 0, failed: 0, pending: 0, potential: 0, mixed: 0, registered: 0 },
+    { received: null, unique: 0, finished: 0, eligible: 0, performed: 0, success: 0, failed: 0, pending: 0, potential: 0, mixed: 0, registered: 0 },
+    { received: 20, unique: 0, finished: 0, eligible: 0, performed: 0, success: 0, failed: 0, pending: 0, potential: 0, mixed: 0, registered: 0 },
+  ];
+  assert.equal(summarizeCallbackRows(rows).received, 30);
+  assert.equal(summarizeCallbackRows(rows.map(row => ({ ...row, received: null }))).received, null);
+});
 test('não conta o mesmo ID em dois dias diferentes', () => {
   assert.throws(() => callbackReport([...interactions, ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '02/09/26', '', '', 'tel:+55', 'tel:100']], callbacks), /datas diferentes/);
 });
