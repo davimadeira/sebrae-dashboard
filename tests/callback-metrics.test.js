@@ -108,15 +108,16 @@ test('exige tentativa para realizado e conversa para sucesso, mesmo com status d
   assert.equal(metrics.pending, 1);
 });
 
-test('callback realizado remove repetição do mesmo cliente e operador no dia', () => {
+test('callback realizado remove repetição do mesmo SIP e DNIS no dia', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '', 'e1', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['Saída', '', 'r1', 'Ana', 'voz', '', 'sip:ana', 'tel:+55 11 99999-0000'],
     ['Saída', '', 'r2', 'Ana', 'voz', '', 'sip:ana', 'tel:5511999990000'],
-    ['Saída', '', 'r3', 'Bia', 'voz', '', 'sip:bia', 'tel:5511999990000'],
+    ['Saída', '', 'r3', 'Ana', 'voz', '', 'sip:bia', 'tel:5511999990000'],
     ['Saída', '', 'r4', 'Ana', 'voz', '', 'sip:ana', 'tel:5511888880000'],
+    ['Saída', '', 'r5', 'Bia', 'voz', '', 'sip:ana', 'tel:5511999990000'],
   ], [callbackHeaders,
-    ['e1', 'Sucesso', '4', '1', 'r1 | r2 | r3 | r4'],
+    ['e1', 'Sucesso', '5', '1', 'r1 | r2 | r3 | r4 | r5'],
   ]);
   assert.equal(metrics.performed, 3);
   assert.equal(metrics.success, 3);

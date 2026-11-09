@@ -23,7 +23,7 @@ function numeric(value) {
 }
 
 function returnIndex(values) {
-  const c = columns(values, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'ANI', 'DNIS']);
+  const c = columns(values, ['ID de conversa', 'Tipo de mídia', 'Direção', 'ANI', 'DNIS']);
   return new Map(values.slice(1).map(row => [normalize(cell(row, c['ID de conversa'])), { row, c }]));
 }
 
@@ -46,11 +46,11 @@ function callbackResults(values, eligible, returns) {
       const found = returns.get(returnId); if (!found) continue;
       const { row: returned, c: r } = found;
       const direction = normalize(cell(returned, r['Direção']));
-      const operator = normalize(cell(returned, r['Usuários']));
+      const sip = normalize(cell(returned, r.ANI));
       const customer = customerKey(cell(returned, r.DNIS));
       if (normalize(cell(returned, r['Tipo de mídia'])) !== 'voz' || !['saida', 'entrada/saida'].includes(direction)) continue;
-      if (!normalize(cell(returned, r.ANI)).startsWith('sip:') || !operator || !customer) continue;
-      rowReturns.add(`${operator}\u0000${customer}`);
+      if (!sip.startsWith('sip:') || !customer) continue;
+      rowReturns.add(`${sip}\u0000${customer}`);
     }
     for (const returned of rowReturns) performed.add(returned);
     if (conversations > 0) for (const returned of rowReturns) success.add(returned);
