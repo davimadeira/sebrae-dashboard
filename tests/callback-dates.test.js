@@ -50,11 +50,11 @@ test('não conta o mesmo ID em dois dias diferentes', () => {
   assert.throws(() => callbackReport([...interactions, ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '02/09/26', '', '', 'tel:+55', 'tel:100']], callbacks), /datas diferentes/);
 });
 
-test('conta cada origem elegível realizada uma vez na data da origem', () => {
+test('conta cada combinação SIP/DNIS uma vez na data da saída', () => {
   const values = [interactions[0],
     ['e1', 'voz', 'Entrada', 'Ana', '', '01/09/2026', '', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['e2', 'voz', 'Entrada', 'Bia', '', '02/09/2026', '', 'Ligação muda', 'tel:200', 'tel:900'],
-    ['r1', 'voz', 'Saída', 'Ana', '', '01/09/2026', '', '', 'sip:ana', 'tel:900'],
+    ['r1', 'voz', 'Saída', 'Ana', '00:00:00.001', '01/09/2026', '', '', 'sip:ana', 'tel:900'],
     ['r2', 'voz', 'Saída', 'Ana', '', '02/09/2026', '', '', 'sip:ana', 'tel:900'],
   ];
   const results = [callbacks[0],

@@ -6,7 +6,7 @@ const headers = ['Direção', 'Total de conversas', 'ID de conversa', 'Usuários
 const callbackHeaders = ['ID da chamada original', 'Status do callback', 'Quantidade de tentativas', 'Tentativas com conversa', 'IDs dos retornos'];
 const noCallbacks = [callbackHeaders];
 
-test('usa a tabulação para elegíveis e os resultados vinculados da aba Callbacks', () => {
+test('usa a tabulação para elegíveis e as saídas SIP/DNIS para os resultados', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '00:00:00', 'e1', '', 'voz', 'Queda de ligação', 'tel:+55', 'tel:100'],
     ['Entrada', '00:00:00', 'e2', '', 'voz', 'ERRO SISTÊMICO', 'tel:+55', 'tel:101'],
@@ -21,15 +21,15 @@ test('usa a tabulação para elegíveis e os resultados vinculados da aba Callba
     ['n1', 'Sucesso', '1', '1', 's3'],
   ]);
   assert.equal(metrics.eligible, 2);
-  assert.equal(metrics.performed, 2);
+  assert.equal(metrics.performed, 3);
   assert.equal(metrics.success, 1);
-  assert.equal(metrics.failed, 1);
+  assert.equal(metrics.failed, 2);
   assert.equal(metrics.pending, 0);
   assert.equal(metrics.unique, 3);
   assert.equal(metrics.finished, 1); // atendidas únicas menos elegíveis
   assert.equal(metrics.potential, 2); // finalizadas mais callbacks com sucesso
   assert.equal(metrics.received, null); // recebidas vêm dos arquivos diários do Drive
-  assert.equal(metrics.successRate, 1 / 2);
+  assert.equal(metrics.successRate, 1 / 3);
 });
 
 test('potencial soma finalizadas e callbacks com sucesso', () => {
@@ -70,49 +70,49 @@ test('reconhece tabulação elegível dentro de finalizações compostas e sem a
   assert.equal(metrics.finished, 0);
 });
 
-test('conta cada ID original elegível uma vez e ignora resultados de não elegíveis', () => {
+test('conta toda saída SIP/DNIS mesmo sem vínculo com uma origem elegível', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '', 'a', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['Entrada', '', 'b', 'Bia', 'voz', 'Ligação muda', 'tel:200', 'tel:900'],
     ['Entrada', '', 'n', 'Caio', 'voz', 'Atendimento concluído', 'tel:300', 'tel:900'],
-    ['Saída', '', 'ra', 'Ana', 'voz', '', 'sip:ana', 'tel:901'],
-    ['Saída', '', 'rb', 'Bia', 'voz', '', 'sip:bia', 'tel:902'],
-    ['Saída', '', 'rn', 'Caio', 'voz', '', 'sip:caio', 'tel:903'],
+    ['Saída', '00:01:00', 'ra', 'Ana', 'voz', '', 'sip:ana', 'tel:901'],
+    ['Saída', '00:00:00', 'rb', 'Bia', 'voz', '', 'sip:bia', 'tel:902'],
+    ['Saída', '2', 'rn', 'Caio', 'voz', '', 'sip:caio', 'tel:903'],
   ], [callbackHeaders,
     ['a', 'Sucesso', '3', '1', 'ra'],
     ['a', 'Sucesso', '3', '1', 'ra'],
     ['b', 'Insucesso', '2', '0', 'rb'],
     ['n', 'Sucesso', '1', '1', 'rn'],
   ]);
-  assert.equal(metrics.performed, 2);
-  assert.equal(metrics.success, 1);
+  assert.equal(metrics.performed, 3);
+  assert.equal(metrics.success, 2);
   assert.equal(metrics.failed, 1);
 });
 
-test('exige tentativa para realizado e conversa para sucesso, mesmo com status divergente', () => {
+test('classifica sucesso pelo Total de conversas e não pelo status da aba Callbacks', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '', 'a', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['Entrada', '', 'b', 'Bia', 'voz', 'Ligação muda', 'tel:200', 'tel:901'],
     ['Entrada', '', 'c', 'Caio', 'voz', 'Queda de ligação', 'tel:300', 'tel:902'],
     ['Saída', '', 'ra', 'Ana', 'voz', '', 'sip:ana', 'tel:910'],
-    ['Saída', '', 'rb', 'Bia', 'voz', '', 'sip:bia', 'tel:911'],
-    ['Saída', '', 'rc', 'Caio', 'voz', '', 'sip:caio', 'tel:912'],
+    ['Saída', '00:00:00.000', 'rb', 'Bia', 'voz', '', 'sip:bia', 'tel:911'],
+    ['Saída', '00:00:00.001', 'rc', 'Caio', 'voz', '', 'sip:caio', 'tel:912'],
   ], [callbackHeaders,
     ['a', 'Sucesso', '0', '0', 'ra'],
     ['b', 'Sucesso', '1', '0', 'rb'],
     ['c', 'Insucesso', '2', '1', 'rc'],
   ]);
-  assert.equal(metrics.performed, 2);
+  assert.equal(metrics.performed, 3);
   assert.equal(metrics.success, 1);
-  assert.equal(metrics.failed, 1);
-  assert.equal(metrics.pending, 1);
+  assert.equal(metrics.failed, 2);
+  assert.equal(metrics.pending, 0);
 });
 
 test('callback realizado remove repetição do mesmo SIP e DNIS no dia', () => {
   const metrics = callbackMetrics([headers,
     ['Entrada', '', 'e1', 'Ana', 'voz', 'Erro sistêmico', 'tel:100', 'tel:900'],
     ['Saída', '', 'r1', 'Ana', 'voz', '', 'sip:ana', 'tel:+55 11 99999-0000'],
-    ['Saída', '', 'r2', 'Ana', 'voz', '', 'sip:ana', 'tel:5511999990000'],
+    ['Saída', '00:00:00.001', 'r2', 'Ana', 'voz', '', 'sip:ana', 'tel:5511999990000'],
     ['Saída', '', 'r3', 'Ana', 'voz', '', 'sip:bia', 'tel:5511999990000'],
     ['Saída', '', 'r4', 'Ana', 'voz', '', 'sip:ana', 'tel:5511888880000'],
     ['Saída', '', 'r5', 'Bia', 'voz', '', 'sip:ana', 'tel:5511999990000'],
@@ -120,8 +120,19 @@ test('callback realizado remove repetição do mesmo SIP e DNIS no dia', () => {
     ['e1', 'Sucesso', '5', '1', 'r1 | r2 | r3 | r4 | r5'],
   ]);
   assert.equal(metrics.performed, 3);
-  assert.equal(metrics.success, 3);
-  assert.equal(metrics.failed, 0);
+  assert.equal(metrics.success, 1);
+  assert.equal(metrics.failed, 2);
+});
+
+test('exige SIP em ANI e tel em DNIS para considerar callback realizado', () => {
+  const metrics = callbackMetrics([headers,
+    ['Saída', '1', 'a', 'Ana', 'voz', '', 'sip:ana', 'tel:55110000'],
+    ['Saída', '1', 'b', 'Ana', 'voz', '', 'tel:ana', 'tel:55110001'],
+    ['Saída', '1', 'c', 'Ana', 'voz', '', 'sip:ana', '55110002'],
+    ['Entrada', '1', 'd', 'Ana', 'voz', '', 'sip:ana', 'tel:55110003'],
+  ], noCallbacks);
+  assert.equal(metrics.performed, 1);
+  assert.equal(metrics.success, 1);
 });
 
 test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
@@ -134,5 +145,5 @@ test('base vazia mantém contagens zeradas e taxas indefinidas', () => {
 
 test('estrutura ausente exige revisão', () => {
   assert.throws(() => callbackMetrics([['Direção']], noCallbacks), { statusCode: 409 });
-  assert.throws(() => callbackMetrics([headers], [['ID da chamada original']]), { statusCode: 409 });
+  assert.doesNotThrow(() => callbackMetrics([headers], []));
 });

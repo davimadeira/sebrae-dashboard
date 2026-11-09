@@ -11,11 +11,11 @@ const columns = [
   ['Atendidas únicas', 'unique', 'Atendidas Únicas = ID do atendimento', 'volume'],
   ['Finalizadas', 'finished', 'Finalizadas = Atendidas Únicas - Elegíveis para callback', 'volume'],
   ['Elegíveis para callback', 'eligible', 'Direção Entrada e Finalização contendo: Erro sistêmico/LIGACAO MUDA/Falta de interação/Queda de ligação', 'return'],
-  ['Callback realizado', 'performed', 'Combinações únicas de SIP na coluna ANI e telefone na coluna DNIS, no dia da chamada original', 'return'],
+  ['Callback realizado', 'performed', 'Combinações únicas de SIP na coluna ANI e telefone na coluna DNIS, no dia da interação de saída', 'return'],
   ['% realizado', 'performedRate', 'Realizados ÷ elegíveis', 'return'],
-  ['Callback com sucesso', 'success', 'ID elegível com ao menos uma tentativa vinculada com conversa', 'return'],
+  ['Callback com sucesso', 'success', 'Combinação de SIP e DNIS com Total de conversas maior que zero', 'return'],
   ['% com sucesso', 'successRate', 'Sucesso ÷ realizados', 'return'],
-  ['Callback sem sucesso', 'failed', 'ID elegível com tentativa vinculada e nenhuma conversa', 'return'],
+  ['Callback sem sucesso', 'failed', 'Combinação de SIP e DNIS sem Total de conversas maior que zero', 'return'],
   ['% sem sucesso', 'failedRate', 'Sem sucesso ÷ realizados', 'return'],
   ['Callback não realizado', 'pending', 'Elegíveis menos callbacks realizados', 'return'],
   ['Potencial de registros', 'potential', 'Potencial de Registro = Finalizadas + Callback com sucesso', 'focus'],
@@ -58,7 +58,7 @@ export default function CallbackPanel({ user }) {
         <p><span className={'callback-connection-dot' + (data ? ' is-connected' : '')}/>{data ? rows.length + ' dias no período' : 'Indicadores de atendimento'}{data && <span> · Atualizado às {new Date(data.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>}</p>
       </div>
       <div className="callback-heading-actions">
-        <DateRangePicker value={filters} onChange={setFilters} label="Data da chamada"/>
+        <DateRangePicker value={filters} onChange={setFilters} label="Data"/>
         <button type="button" className="callback-refresh" disabled={loading} onClick={() => setReload(value => value + 1)}><RefreshCw size={14} className={loading ? 'animate-spin' : ''}/>Atualizar</button>
       </div>
     </header>
@@ -91,14 +91,14 @@ export default function CallbackPanel({ user }) {
       <li>Atendidas únicas: IDs distintos de atendimento de voz com direção Entrada.</li>
       <li>Finalizadas: Atendidas únicas menos Elegíveis para callback.</li>
       <li>Elegíveis: IDs distintos de voz com direção Entrada e Finalização contendo Queda de ligação, LIGACAO MUDA, Erro sistêmico ou Falta de interação. A tabulação pode aparecer junto de outros textos e pode estar sem acentos.</li>
-      <li>Callback realizado: combinações distintas de SIP na coluna ANI e telefone na coluna DNIS entre os IDs vinculados. Repetições do mesmo SIP com o mesmo DNIS no dia da chamada original contam uma vez; outro SIP, outro DNIS ou outro dia pode contar novamente.</li>
-      <li>Sucesso: a combinação de SIP e DNIS possui ao menos uma origem vinculada com conversa. Sem sucesso: foi realizada, mas nenhuma origem vinculada possui conversa.</li>
+      <li>Callback realizado: combinações distintas de SIP na coluna ANI e telefone na coluna DNIS nas interações de saída. Repetições do mesmo SIP com o mesmo DNIS no mesmo dia contam uma vez; outro SIP, outro DNIS ou outro dia pode contar novamente.</li>
+      <li>Sucesso: a combinação de SIP e DNIS possui ao menos uma interação com Total de conversas maior que zero. Sem sucesso: todas as interações da combinação têm Total de conversas zerado ou vazio.</li>
       <li>Callback não realizado é a diferença entre elegíveis e realizados, sem resultado negativo quando houver mais callbacks SIP do que elegíveis.</li>
-      <li>As taxas são: realizados ÷ elegíveis; sucesso ÷ realizados; sem sucesso ÷ realizados. Tentativas adicionais não multiplicam o número de chamadas originais.</li>
+      <li>As taxas são: realizados ÷ elegíveis; sucesso ÷ realizados; sem sucesso ÷ realizados. O percentual realizado pode ultrapassar 100%, pois realizados abrangem todas as saídas SIP/DNIS do dia, mesmo sem vínculo com uma entrada elegível.</li>
       <li>Potencial de registros é Finalizadas mais Callback com sucesso.</li>
       <li>Registro no Foco é a quantidade de registros de telefonia na aba Foco, na data de abertura correspondente. Não há cruzamento com Marca externa ou Protocolo CNR.</li>
       <li>% registro no Foco é a quantidade registrada dividida pelo potencial no mesmo período. Quando a aba Foco não estiver disponível, o painel exibe — sem interromper os demais indicadores.</li>
-      <li>Cada linha usa a data da chamada original. O intervalo inclui a data inicial e a data final e atualiza a tabela, os totais e os percentuais. Escolha os dois dias e clique em Aplicar. Todo o período remove o recorte após aplicar. Use Atualizar depois de atualizar a planilha.</li>
+      <li>Cada indicador usa a data da interação correspondente; os callbacks ficam na data da saída. O intervalo inclui a data inicial e a data final e atualiza a tabela, os totais e os percentuais. Escolha os dois dias e clique em Aplicar. Todo o período remove o recorte após aplicar. Use Atualizar depois de atualizar a planilha.</li>
     </ul><p className="callback-note"><a href="https://help.genesys.cloud/faqs/what-is-the-difference-between-the-answered-and-handle-metrics/" target="_blank" rel="noreferrer" className="underline">Referência: Genesys — diferença entre Answered e Handle</a></p></details>
   </section>;
 }
