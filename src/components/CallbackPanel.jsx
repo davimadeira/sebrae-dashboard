@@ -10,7 +10,7 @@ const columns = [
   ['Recebidas', 'received', 'Oferta da fila SAC nos arquivos diários, sem Ouvidoria', 'volume'],
   ['Atendidas únicas', 'unique', 'Atendidas Únicas = ID do atendimento', 'volume'],
   ['Finalizadas', 'finished', 'Finalizadas = Atendidas Únicas - Elegíveis para callback', 'volume'],
-  ['Elegíveis para callback', 'eligible', 'Direção Entrada e Finalização contendo: Erro sistêmico/LIGACAO MUDA/Falta de interação/Queda de ligação', 'return'],
+  ['Elegíveis para callback', 'eligible', 'Entradas com tabulação elegível mais origens vinculadas a um callback realizado em até 30 minutos', 'return'],
   ['Callback realizado', 'performed', 'Combinações únicas de SIP na coluna ANI e telefone na coluna DNIS, no dia da interação de saída', 'return'],
   ['% realizado', 'performedRate', 'Realizados ÷ elegíveis', 'return'],
   ['Callback com sucesso', 'success', 'Combinação de SIP e DNIS com Total de conversas maior que zero', 'return'],
@@ -77,7 +77,7 @@ export default function CallbackPanel({ user }) {
             {rows.length > 0 && <tfoot><tr><th scope="row" className="callback-date-cell">Total</th>{columns.map(([, key, note, group]) => <td key={key} className={'cb-' + group} title={total[key] === null ? note : undefined}>{valueOf(total, key)}</td>)}</tr></tfoot>}
           </table>
         </div>
-        <div className="callback-table-legend"><span><i className="callback-dot received"/>Recebimento</span><span><i className="callback-dot callback"/>Callback</span><span><i className="callback-dot focus"/>Foco</span><p>{number(total.mixed)} interações Entrada/Saída separadas no período.</p></div>
+        <div className="callback-table-legend"><span><i className="callback-dot received"/>Recebimento</span><span><i className="callback-dot callback"/>Callback</span><span><i className="callback-dot focus"/>Foco</span><p>{number(total.inferred)} elegíveis incluídos por callback identificado · {number(total.mixed)} interações Entrada/Saída separadas.</p></div>
       </section>
       <div className="callback-summary-cards" aria-label="Resumo do período filtrado">
         <div><span>Elegíveis</span><strong>{loading || !data ? '—' : number(total.eligible)}</strong></div>
@@ -90,7 +90,8 @@ export default function CallbackPanel({ user }) {
       <li>Recebidas: valor da coluna Oferta nos arquivos diários da pasta de recebidas, considerando a fila SAC e desconsiderando a linha de Ouvidoria.</li>
       <li>Atendidas únicas: IDs distintos de atendimento de voz com direção Entrada.</li>
       <li>Finalizadas: Atendidas únicas menos Elegíveis para callback.</li>
-      <li>Elegíveis: IDs distintos de voz com direção Entrada e Finalização contendo Queda de ligação, LIGACAO MUDA, Erro sistêmico ou Falta de interação. A tabulação pode aparecer junto de outros textos e pode estar sem acentos.</li>
+      <li>Elegíveis: união dos IDs distintos de voz com direção Entrada que possuem uma das quatro tabulações e das origens vinculadas a um callback realizado, ainda que tenham sido tabuladas incorretamente. Um ID que atende aos dois critérios conta apenas uma vez.</li>
+      <li>Vínculo da correção de tabulação: ANI da entrada igual ao DNIS da saída, operador em comum e início do retorno entre zero e 30 minutos após o término da entrada. Para cada combinação diária de SIP e DNIS, usa-se a primeira tentativa que encontra vínculo; havendo várias origens possíveis, vale a mais recente.</li>
       <li>Callback realizado: combinações distintas de SIP na coluna ANI e telefone na coluna DNIS nas interações de saída. Repetições do mesmo SIP com o mesmo DNIS no mesmo dia contam uma vez; outro SIP, outro DNIS ou outro dia pode contar novamente.</li>
       <li>Sucesso: a combinação de SIP e DNIS possui ao menos uma interação com Total de conversas maior que zero. Sem sucesso: todas as interações da combinação têm Total de conversas zerado ou vazio.</li>
       <li>Callback não realizado é a diferença entre elegíveis e realizados, sem resultado negativo quando houver mais callbacks SIP do que elegíveis.</li>
