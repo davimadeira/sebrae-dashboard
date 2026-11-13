@@ -25,6 +25,22 @@ const columns = [
 const valueOf = (row, key) => key.endsWith('Rate') ? percent(row[key]) : number(row[key]);
 const infoColumns = new Set(['unique', 'finished', 'eligible', 'potential']);
 const ColumnLabel = ({ label, metricKey, note }) => <span className="callback-column-label"><span>{label}</span>{infoColumns.has(metricKey) && <span className="callback-info" tabIndex={0} aria-label={note}><Info size={12}/><span role="tooltip">{note}</span></span>}</span>;
+const formulas = [
+  ['Recebidas', 'Oferta da fila SAC, sem Ouvidoria.'],
+  ['Atendidas únicas', 'IDs únicos de voz com direção Entrada.'],
+  ['Finalizadas', 'Atendidas únicas − Elegíveis.'],
+  ['Elegíveis para callback', 'Tabulações elegíveis + entradas vinculadas a callback, sem repetir o ID.'],
+  ['Callback realizado', 'Combinações únicas de SIP + DNIS no dia.'],
+  ['% realizado', 'Callback realizado ÷ Elegíveis.'],
+  ['Callback com sucesso', 'Realizados com Total de conversas maior que zero.'],
+  ['% com sucesso', 'Callback com sucesso ÷ Callback realizado.'],
+  ['Callback sem sucesso', 'Realizados com Total de conversas zero ou vazio.'],
+  ['% sem sucesso', 'Callback sem sucesso ÷ Callback realizado.'],
+  ['Callback não realizado', 'Elegíveis − Callback realizado, com mínimo zero.'],
+  ['Potencial de registros', 'Finalizadas + Callback com sucesso.'],
+  ['Registro no Foco', 'Linhas de Telefonia registradas na aba Foco.'],
+  ['% registro no Foco', 'Registro no Foco ÷ Potencial de registros.'],
+];
 
 export default function CallbackPanel({ user }) {
   const [data, setData] = useState(null);
@@ -77,7 +93,7 @@ export default function CallbackPanel({ user }) {
             {rows.length > 0 && <tfoot><tr><th scope="row" className="callback-date-cell">Total</th>{columns.map(([, key, note, group]) => <td key={key} className={'cb-' + group} title={total[key] === null ? note : undefined}>{valueOf(total, key)}</td>)}</tr></tfoot>}
           </table>
         </div>
-        <div className="callback-table-legend"><span><i className="callback-dot received"/>Recebimento</span><span><i className="callback-dot callback"/>Callback</span><span><i className="callback-dot focus"/>Foco</span><p>{number(total.inferred)} elegíveis incluídos por callback identificado · {number(total.mixed)} interações Entrada/Saída separadas.</p></div>
+        <div className="callback-table-legend"><span><i className="callback-dot received"/>Recebimento</span><span><i className="callback-dot callback"/>Callback</span><span><i className="callback-dot focus"/>Foco</span><p>{number(total.mixed)} interações Entrada/Saída separadas.</p></div>
       </section>
       <div className="callback-summary-cards" aria-label="Resumo do período filtrado">
         <div><span>Elegíveis</span><strong>{loading || !data ? '—' : number(total.eligible)}</strong></div>
@@ -86,20 +102,8 @@ export default function CallbackPanel({ user }) {
       </div>
       <div className="callback-notice"><AlertCircle size={15}/><p><strong>—</strong> indica definição ou fonte pendente. Sucesso significa conversa com o cliente, não comprova atendimento concluído. <a href="https://docs.google.com/spreadsheets/d/1Egx88GkeZ9ZHQrijClJEXIEDlQBy-ImuW_G92uR65R4/edit" target="_blank" rel="noreferrer" className="underline">Abrir planilha</a></p></div>
     </>}
-    <details className="bko-panel callback-section"><summary>Como os indicadores são calculados</summary><ul>
-      <li>Recebidas: valor da coluna Oferta nos arquivos diários da pasta de recebidas, considerando a fila SAC e desconsiderando a linha de Ouvidoria.</li>
-      <li>Atendidas únicas: IDs distintos de atendimento de voz com direção Entrada.</li>
-      <li>Finalizadas: Atendidas únicas menos Elegíveis para callback.</li>
-      <li>Elegíveis: união dos IDs distintos de voz com direção Entrada que possuem uma das quatro tabulações e das origens vinculadas a um callback realizado, ainda que tenham sido tabuladas incorretamente. Um ID que atende aos dois critérios conta apenas uma vez.</li>
-      <li>Vínculo da correção de tabulação: ANI da entrada igual ao DNIS da saída, operador em comum e início do retorno entre zero e 30 minutos após o término da entrada. Para cada combinação diária de SIP e DNIS, usa-se a primeira tentativa que encontra vínculo; havendo várias origens possíveis, vale a mais recente.</li>
-      <li>Callback realizado: combinações distintas de SIP na coluna ANI e telefone na coluna DNIS nas interações de saída. Repetições do mesmo SIP com o mesmo DNIS no mesmo dia contam uma vez; outro SIP, outro DNIS ou outro dia pode contar novamente.</li>
-      <li>Sucesso: a combinação de SIP e DNIS possui ao menos uma interação com Total de conversas maior que zero. Sem sucesso: todas as interações da combinação têm Total de conversas zerado ou vazio.</li>
-      <li>Callback não realizado é a diferença entre elegíveis e realizados, sem resultado negativo quando houver mais callbacks SIP do que elegíveis.</li>
-      <li>As taxas são: realizados ÷ elegíveis; sucesso ÷ realizados; sem sucesso ÷ realizados. O percentual realizado pode ultrapassar 100%, pois realizados abrangem todas as saídas SIP/DNIS do dia, mesmo sem vínculo com uma entrada elegível.</li>
-      <li>Potencial de registros é Finalizadas mais Callback com sucesso.</li>
-      <li>Registro no Foco é a quantidade de registros de telefonia na aba Foco, na data de abertura correspondente. Não há cruzamento com Marca externa ou Protocolo CNR.</li>
-      <li>% registro no Foco é a quantidade registrada dividida pelo potencial no mesmo período. Quando a aba Foco não estiver disponível, o painel exibe — sem interromper os demais indicadores.</li>
-      <li>Cada indicador usa a data da interação correspondente; os callbacks ficam na data da saída. O intervalo inclui a data inicial e a data final e atualiza a tabela, os totais e os percentuais. Escolha os dois dias e clique em Aplicar. Todo o período remove o recorte após aplicar. Use Atualizar depois de atualizar a planilha.</li>
-    </ul><p className="callback-note"><a href="https://help.genesys.cloud/faqs/what-is-the-difference-between-the-answered-and-handle-metrics/" target="_blank" rel="noreferrer" className="underline">Referência: Genesys — diferença entre Answered e Handle</a></p></details>
+    <details className="bko-panel callback-section callback-formulas"><summary><Info size={15}/>Ver fórmula de cada coluna</summary><dl>
+      {formulas.map(([label, formula]) => <div key={label}><dt>{label}</dt><dd>{formula}</dd></div>)}
+    </dl></details>
   </section>;
 }

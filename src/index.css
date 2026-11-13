@@ -307,12 +307,15 @@ table tbody td {
 .callback-equation strong { display: block; font-size: 25px; color: #185d7a; margin-bottom: 5px; }
 .callback-foco>p { font-size: 12px; line-height: 1.8; }
 .callback-section summary { font-size: 13px; font-weight: 650; cursor: pointer; }
+.callback-formulas summary { display:flex; align-items:center; gap:7px; }
+.callback-formulas dt { font-weight:700; color:#31566e; }
+.callback-formulas dd { max-width:62%; text-align:right; color:#5f7180; }
 .callback-section ul { padding-left: 20px; list-style: disc; font-size: 12px; line-height: 1.9; margin-top: 14px; }
 .dark .callback-notice { background: #172f44; color: #b8d4ea; border-color: #304e66; }
 .dark .callback-section dl>div { border-color: #304156; }
 .dark .callback-equation strong { color: #8dcedd; }
 @media(max-width:1100px) { .callback-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:650px) { .callback-columns,.callback-kpis { grid-template-columns:1fr; } .callback-section { padding:18px; } }
+@media(max-width:650px) { .callback-columns,.callback-kpis { grid-template-columns:1fr; } .callback-section { padding:18px; } .callback-formulas dl>div { display:block; } .callback-formulas dd { max-width:none; margin-top:4px; text-align:left; } }
 
 /* Tabela consolidada do Callback */
 .callback-hero { display:flex; align-items:stretch; justify-content:space-between; gap:22px; padding:30px; border-radius:18px; background:linear-gradient(124deg,#0c3f69,#17698e 60%,#138a91); color:#fff; margin-bottom:18px; box-shadow:0 14px 30px rgba(17,90,130,.16); }
