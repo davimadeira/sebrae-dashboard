@@ -7,10 +7,10 @@ const number = value => typeof value === 'number' ? value.toLocaleString('pt-BR'
 const percent = value => typeof value === 'number' ? (value * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%' : '—';
 const emptyFilters = () => ({ start: '', end: '' });
 const columns = [
-  ['Recebidas', 'received', 'Oferta da fila SAC nos arquivos diários, sem Ouvidoria', 'volume'],
+  ['Recebidas', 'received', 'Ofertas da fila de SAC e Ouvidoria', 'volume'],
   ['Atendidas únicas', 'unique', 'Atendidas Únicas = ID do atendimento', 'volume'],
   ['Finalizadas', 'finished', 'Finalizadas = Atendidas Únicas - Elegíveis para callback', 'volume'],
-  ['Elegíveis para callback', 'eligible', 'Entradas elegíveis para callback, sem repetir o ID', 'return'],
+  ['Elegíveis para callback', 'eligible', 'Direção Entrada e finalização com: Erro sistêmico, LIGACAO MUDA, Falta de interação ou Queda de ligação', 'return'],
   ['Callback realizado', 'performed', 'Combinações únicas de SIP na coluna ANI e telefone na coluna DNIS, no dia da interação de saída', 'return'],
   ['% realizado', 'performedRate', 'Realizados ÷ elegíveis', 'return'],
   ['Callback com sucesso', 'success', 'Combinação de SIP e DNIS com Total de conversas maior que zero', 'return'],
@@ -26,10 +26,10 @@ const valueOf = (row, key) => key.endsWith('Rate') ? percent(row[key]) : number(
 const infoColumns = new Set(['unique', 'finished', 'eligible', 'potential']);
 const ColumnLabel = ({ label, metricKey, note }) => <span className="callback-column-label"><span>{label}</span>{infoColumns.has(metricKey) && <span className="callback-info" tabIndex={0} aria-label={note}><Info size={12}/><span role="tooltip">{note}</span></span>}</span>;
 const formulas = [
-  ['Recebidas', 'Oferta da fila SAC, sem Ouvidoria.'],
+  ['Recebidas', 'Ofertas da fila de SAC e Ouvidoria.'],
   ['Atendidas únicas', 'IDs únicos de voz com direção Entrada.'],
   ['Finalizadas', 'Atendidas únicas − Elegíveis.'],
-  ['Elegíveis para callback', 'Entradas elegíveis para callback, sem repetir o ID.'],
+  ['Elegíveis para callback', 'IDs de Entrada com Erro sistêmico, LIGACAO MUDA, Falta de interação ou Queda de ligação.'],
   ['Callback realizado', 'Combinações únicas de SIP + DNIS no dia.'],
   ['% realizado', 'Callback realizado ÷ Elegíveis.'],
   ['Callback com sucesso', 'Realizados com Total de conversas maior que zero.'],
