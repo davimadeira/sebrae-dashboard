@@ -59,7 +59,7 @@ test('não conta o mesmo ID em dois dias diferentes', () => {
   assert.throws(() => callbackReport([...interactions, ['a', 'voz', 'Entrada', 'Ana', '00:01:00', '02/09/26', '02/09/26', '', '', 'tel:+55', 'tel:100']], callbacks), /datas diferentes/);
 });
 
-test('inclui origem tabulada incorretamente quando há callback vinculado', () => {
+test('considera somente origem tabulada como elegível e realizada', () => {
   const values = [interactions[0],
     ['e1', 'voz', 'Entrada', 'Ana', '', '01/09/2026 10:00', '01/09/2026 10:05', '', 'Microtema comum', 'tel:900', 'tel:100'],
     ['e2', 'voz', 'Entrada', 'Bia', '', '02/09/2026 10:00', '02/09/2026 10:05', '', 'Ligação muda', 'tel:900', 'tel:200'],
@@ -72,26 +72,39 @@ test('inclui origem tabulada incorretamente quando há callback vinculado', () =
     ['e2', 'Insucesso', '02/09/2026', '', '2', '0', 'r2'],
   ];
   const report = callbackReport(values, results);
-  assert.deepEqual(report.rows.map(row => row.performed), [1, 1]);
-  assert.deepEqual(report.rows.map(row => row.eligible), [1, 1]);
-  assert.deepEqual(report.rows.map(row => row.inferred), [1, 0]);
-  assert.equal(report.metrics.performed, 2);
-  assert.equal(report.metrics.eligible, 2);
-  assert.equal(report.metrics.inferred, 1);
-  assert.equal(report.metrics.success, 1);
+  assert.deepEqual(report.rows.map(row => row.performed), [0, 1]);
+  assert.deepEqual(report.rows.map(row => row.eligible), [0, 1]);
+  assert.equal(report.metrics.performed, 1);
+  assert.equal(report.metrics.eligible, 1);
+  assert.equal(report.metrics.success, 0);
   assert.equal(report.metrics.failed, 1);
+  assert.ok(report.metrics.performed <= report.metrics.eligible);
   assert.deepEqual(summarizeCallbackRows(report.rows), report.metrics);
 });
 
-test('não infere elegibilidade fora de 30 minutos ou sem operador em comum', () => {
+test('não realiza elegíveis fora de 30 minutos ou sem operador em comum', () => {
   const values = [interactions[0],
-    ['late', 'voz', 'Entrada', 'Ana', '', '03/09/2026 10:00', '03/09/2026 10:05', '', 'Microtema', 'tel:901', 'tel:100'],
-    ['other', 'voz', 'Entrada', 'Ana', '', '03/09/2026 11:00', '03/09/2026 11:05', '', 'Microtema', 'tel:902', 'tel:100'],
+    ['late', 'voz', 'Entrada', 'Ana', '', '03/09/2026 10:00', '03/09/2026 10:05', '', 'Erro sistêmico', 'tel:901', 'tel:100'],
+    ['other', 'voz', 'Entrada', 'Ana', '', '03/09/2026 11:00', '03/09/2026 11:05', '', 'Ligação muda', 'tel:902', 'tel:100'],
     ['r1', 'voz', 'Saída', 'Ana', '1', '03/09/2026 10:36', '03/09/2026 10:37', '', '', 'sip:ana', 'tel:901'],
     ['r2', 'voz', 'Saída', 'Bia', '1', '03/09/2026 11:20', '03/09/2026 11:21', '', '', 'sip:bia', 'tel:902'],
   ];
   const report = callbackReport(values, [callbacks[0]]);
-  assert.equal(report.metrics.performed, 2);
-  assert.equal(report.metrics.eligible, 0);
-  assert.equal(report.metrics.inferred, 0);
+  assert.equal(report.metrics.performed, 0);
+  assert.equal(report.metrics.eligible, 2);
+  assert.equal(report.metrics.pending, 2);
+});
+
+test('várias tentativas do mesmo elegível contam um realizado e preservam o sucesso', () => {
+  const values = [interactions[0],
+    ['e1', 'voz', 'Entrada', 'Ana', '', '04/09/2026 10:00', '04/09/2026 10:05', '', 'Queda de ligação', 'tel:903', 'tel:100'],
+    ['r1', 'voz', 'Saída', 'Ana', '', '04/09/2026 10:15', '04/09/2026 10:16', '', '', 'sip:ana', 'tel:903'],
+    ['r2', 'voz', 'Saída', 'Ana', '00:00:00.001', '04/09/2026 10:20', '04/09/2026 10:21', '', '', 'sip:ana', 'tel:903'],
+  ];
+  const report = callbackReport(values, [callbacks[0]]);
+  assert.equal(report.metrics.eligible, 1);
+  assert.equal(report.metrics.performed, 1);
+  assert.equal(report.metrics.success, 1);
+  assert.equal(report.metrics.failed, 0);
+  assert.equal(report.metrics.performedRate, 1);
 });

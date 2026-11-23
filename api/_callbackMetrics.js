@@ -45,8 +45,8 @@ function sharesOperator(left, right) {
   return false;
 }
 
-function inferredEligibleOrigins(values, windowMinutes = 30) {
-  const c = columns(values, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Data', 'Data de término', 'ANI', 'DNIS']);
+function linkedEligibleResults(values, windowMinutes = 30) {
+  const c = columns(values, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Usuários', 'Total de conversas', 'Data', 'Data de término', 'Finalização', 'ANI', 'DNIS']);
   const originsByPhone = new Map(), returnsByPair = new Map();
   for (const row of values.slice(1)) {
     if (normalize(cell(row, c['Tipo de mídia'])) !== 'voz') continue;
@@ -56,7 +56,7 @@ function inferredEligibleOrigins(values, windowMinutes = 30) {
       const ani = normalize(cell(row, c.ANI));
       const phone = customerKey(ani);
       const end = dateTime(cell(row, c['Data de término']));
-      if (!id || !ani.startsWith('tel:') || !phone || end === null) continue;
+      if (!id || !ani.startsWith('tel:') || !phone || end === null || !isEligibleFinalization(cell(row, c.Finalização))) continue;
       if (!originsByPhone.has(phone)) originsByPhone.set(phone, []);
       originsByPhone.get(phone).push({ id, end, operators: operatorSet(cell(row, c['Usuários'])) });
       continue;
@@ -67,21 +67,24 @@ function inferredEligibleOrigins(values, windowMinutes = 30) {
     if (!sip.startsWith('sip:') || !dnis.startsWith('tel:') || !customer || start === null) continue;
     const pair = `${dayKey(cell(row, c.Data))}\u0000${sip}\u0000${customer}`;
     if (!returnsByPair.has(pair)) returnsByPair.set(pair, []);
-    returnsByPair.get(pair).push({ start, customer, operators: operatorSet(cell(row, c['Usuários'])) });
+    returnsByPair.get(pair).push({ start, customer, operators: operatorSet(cell(row, c['Usuários'])), success: hasConversation(cell(row, c['Total de conversas'])) });
   }
   for (const origins of originsByPhone.values()) origins.sort((a, b) => b.end - a.end);
   for (const attempts of returnsByPair.values()) attempts.sort((a, b) => a.start - b.start);
-  const inferred = new Set(), windowMs = windowMinutes * 60 * 1000;
+  const linked = new Map(), windowMs = windowMinutes * 60 * 1000;
   for (const attempts of returnsByPair.values()) {
     for (const attempt of attempts) {
       const origin = (originsByPhone.get(attempt.customer) || []).find(candidate => {
         const delay = attempt.start - candidate.end;
         return delay >= 0 && delay <= windowMs && sharesOperator(attempt.operators, candidate.operators);
       });
-      if (origin) { inferred.add(origin.id); break; }
+      if (origin) {
+        linked.set(origin.id, Boolean(linked.get(origin.id)) || attempts.some(item => item.success));
+        break;
+      }
     }
   }
-  return inferred;
+  return linked;
 }
 
 function hasConversation(value) {
@@ -92,23 +95,6 @@ function hasConversation(value) {
   const time = /^(\d+):(\d{1,2}):(\d{1,2}(?:\.\d+)?)$/.exec(raw);
   if (!time) return false;
   return Number(time[1]) * 3600 + Number(time[2]) * 60 + Number(time[3]) > 0;
-}
-
-function callbackResults(values) {
-  const c = columns(values, ['Tipo de mídia', 'Direção', 'ANI', 'DNIS', 'Total de conversas']);
-  const performed = new Set(), success = new Set();
-  for (const row of values.slice(1)) {
-    const direction = normalize(cell(row, c['Direção']));
-    const sip = normalize(cell(row, c.ANI));
-    const dnis = normalize(cell(row, c.DNIS));
-    const customer = customerKey(dnis);
-    if (normalize(cell(row, c['Tipo de mídia'])) !== 'voz' || !['saida', 'entrada/saida'].includes(direction)) continue;
-    if (!sip.startsWith('sip:') || !dnis.startsWith('tel:') || !customer) continue;
-    const pair = `${sip}\u0000${customer}`;
-    performed.add(pair);
-    if (hasConversation(cell(row, c['Total de conversas']))) success.add(pair);
-  }
-  return { performed: performed.size, success: success.size, failed: performed.size - success.size };
 }
 
 function focoTelephoneByDate(values) {
@@ -133,10 +119,10 @@ function focoTelephoneByDate(values) {
   return result;
 }
 
-export function callbackMetrics(interactionsValues = [], callbacksValues = [], focoValues = [], registeredOverride, receivedOverride, inferredEligible = new Set()) {
+export function callbackMetrics(interactionsValues = [], callbacksValues = [], focoValues = [], registeredOverride, receivedOverride, linkedResults) {
   const i = columns(interactionsValues, ['ID de conversa', 'Tipo de mídia', 'Direção', 'Finalização']);
   const focoByDate = registeredOverride === undefined ? focoTelephoneByDate(focoValues) : null;
-  const inbound = new Set(), mixed = new Set(), explicit = new Set();
+  const inbound = new Set(), mixed = new Set(), eligible = new Set();
   for (const row of interactionsValues.slice(1)) {
     const id = normalize(cell(row, i['ID de conversa']));
     if (!id || normalize(cell(row, i['Tipo de mídia'])) !== 'voz') continue;
@@ -144,17 +130,19 @@ export function callbackMetrics(interactionsValues = [], callbacksValues = [], f
     if (direction === 'entrada/saida') mixed.add(id);
     if (direction !== 'entrada') continue;
     inbound.add(id);
-    if (isEligibleFinalization(cell(row, i.Finalização))) explicit.add(id);
+    if (isEligibleFinalization(cell(row, i.Finalização))) eligible.add(id);
   }
-  const inferred = new Set([...inbound].filter(id => inferredEligible.has(id) && !explicit.has(id)));
-  const eligible = new Set([...explicit, ...inferred]);
-  const { performed, success, failed } = callbackResults(interactionsValues);
+  const linked = linkedResults || new Map();
+  const performedIds = [...eligible].filter(id => linked.has(id));
+  const performed = performedIds.length;
+  const success = performedIds.filter(id => linked.get(id)).length;
+  const failed = performed - success;
   const rate = (value, total) => total ? value / total : null;
   const unique = inbound.size;
   const finished = Math.max(unique - eligible.size, 0);
   const potential = finished + success;
   const registered = registeredOverride === undefined ? (focoByDate ? [...focoByDate.values()].reduce((sum, count) => sum + count, 0) : null) : registeredOverride;
-  return { received: receivedOverride === undefined ? null : receivedOverride, answered: null, unique, finished, eligible: eligible.size, inferred: inferred.size, performed, success, failed, pending: Math.max(eligible.size - performed, 0), performedRate: rate(performed, eligible.size), successRate: rate(success, performed), failedRate: rate(failed, performed), potential, registered, registeredRate: registered === null ? null : rate(registered, potential), mixed: mixed.size };
+  return { received: receivedOverride === undefined ? null : receivedOverride, answered: null, unique, finished, eligible: eligible.size, performed, success, failed, pending: eligible.size - performed, performedRate: rate(performed, eligible.size), successRate: rate(success, performed), failedRate: rate(failed, performed), potential, registered, registeredRate: registered === null ? null : rate(registered, potential), mixed: mixed.size };
 }
 
 function dayKey(value) {
@@ -168,10 +156,10 @@ function dayKey(value) {
 }
 
 function summarizeMetrics(rows, received, registered) {
-  const keys = ['unique', 'finished', 'eligible', 'inferred', 'performed', 'success', 'failed', 'potential', 'mixed'];
+  const keys = ['unique', 'finished', 'eligible', 'performed', 'success', 'failed', 'potential', 'mixed'];
   const total = Object.fromEntries(keys.map(key => [key, rows.reduce((sum, row) => sum + row[key], 0)]));
   const rate = (value, denominator) => denominator ? value / denominator : null;
-  total.pending = Math.max(total.eligible - total.performed, 0);
+  total.pending = total.eligible - total.performed;
   return { ...total, received, answered: null, registered,
     performedRate: rate(total.performed, total.eligible), successRate: rate(total.success, total.performed),
     failedRate: rate(total.failed, total.performed), registeredRate: registered === null ? null : rate(registered, total.potential) };
@@ -179,7 +167,7 @@ function summarizeMetrics(rows, received, registered) {
 
 export function callbackReport(interactions, callbacks = [], foco = [], receivedByDate = new Map()) {
   const i = columns(interactions, ['Data', 'ID de conversa']);
-  const buckets = new Map(), seen = new Map(), focoByDate = focoTelephoneByDate(foco), inferredEligible = inferredEligibleOrigins(interactions);
+  const buckets = new Map(), seen = new Map(), focoByDate = focoTelephoneByDate(foco), linkedResults = linkedEligibleResults(interactions);
   for (const row of interactions.slice(1)) {
     const id = normalize(cell(row, i['ID de conversa'])); if (!id) continue;
     const date = dayKey(cell(row, i.Data));
@@ -190,6 +178,6 @@ export function callbackReport(interactions, callbacks = [], foco = [], received
   for (const date of receivedByDate.keys()) if (!buckets.has(date)) buckets.set(date, []);
   const registeredTotal = focoByDate ? [...focoByDate.values()].reduce((sum, count) => sum + count, 0) : null;
   const receivedTotal = receivedByDate.size ? [...receivedByDate.values()].reduce((sum, count) => sum + count, 0) : null;
-  const rows = [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => ({ date, ...callbackMetrics([interactions[0], ...values], callbacks, foco, focoByDate ? focoByDate.get(date) || 0 : null, receivedByDate.has(date) ? receivedByDate.get(date) : null, inferredEligible) }));
+  const rows = [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => ({ date, ...callbackMetrics([interactions[0], ...values], callbacks, foco, focoByDate ? focoByDate.get(date) || 0 : null, receivedByDate.has(date) ? receivedByDate.get(date) : null, linkedResults) }));
   return { metrics: summarizeMetrics(rows, receivedTotal, registeredTotal), rows };
 }
